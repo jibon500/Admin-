@@ -114,6 +114,11 @@
             color: #212529; /* Bootstrap dark color */
             margin-right: auto; /* Align left for user */
         }
+        /* - Update: Hide global loading spinner by default - */
+        .loading-spinner {
+            display: none;
+        }
+        /* - End Update - */
     </style>
 </head>
 <body>
@@ -166,8 +171,8 @@
     <div class="container-fluid main-panel">
         <div class="row">
             <div class="col-md-12">
-                <!-- Loading Spinner -->
-                <div id="loading-spinner" class="d-flex justify-content-center align-items-center" style="height: 80vh; display: none;">
+                <!-- Global Loading Spinner (Hidden by default) -->
+                <div id="loading-spinner" class="d-flex justify-content-center align-items-center loading-spinner" style="height: 80vh;">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
@@ -199,63 +204,67 @@
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Dashboard</h1>
                     </div>
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <div class="card text-white bg-primary">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Users</h5>
-                                    <p class="card-text" id="total-users">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card text-white bg-success">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Points</h5>
-                                    <p class="card-text" id="total-points">0</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card text-white bg-info">
-                                <div class="card-body">
-                                    <h5 class="card-title">Total Balance ($)</h5>
-                                    <p class="card-text" id="total-balance">0.00</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card text-white bg-warning">
-                                <div class="card-body">
-                                    <h5 class="card-title">Pending Withdrawals</h5>
-                                    <p class="card-text" id="pending-withdrawals">0</p>
-                                </div>
-                            </div>
+                    <!-- Dashboard Loading Spinner (Visible only during dashboard load) -->
+                    <div id="dashboard-loading-spinner" class="d-flex justify-content-center align-items-center" style="height: 50vh; display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Recent Withdrawals</h5>
+                    <!-- Dashboard Content (Initially hidden, shown after load) -->
+                    <div id="dashboard-content" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4 mb-4">
+                                <div class="card text-white bg-primary">
+                                    <div class="card-header">Total Users</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="total-users-count">0</h5>
+                                        <p class="card-text">Registered users</p>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <ul id="recent-withdrawals-list" class="list-group list-group-flush">
-                                        <!-- Recent withdrawals will be populated here -->
-                                    </ul>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card text-white bg-success">
+                                    <div class="card-header">Total Balance</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="total-balance-sum">$0.00</h5>
+                                        <p class="card-text">Across all users</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-4">
+                                <div class="card text-white bg-info">
+                                    <div class="card-header">Pending Withdrawals</div>
+                                    <div class="card-body">
+                                        <h5 class="card-title" id="pending-withdrawals-count">0</h5>
+                                        <p class="card-text">Requests awaiting action</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Recent Users</h5>
-                                </div>
-                                <div class="card-body">
-                                    <ul id="recent-users-list" class="list-group list-group-flush">
-                                        <!-- Recent users will be populated here -->
-                                    </ul>
-                                </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4>Global Configuration</h4>
+                                <ul class="list-group">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">Ad System Status<span class="config-value" id="dashboard-ad-system-status">Loading...</span></li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">Daily Ad Limit Per User<span class="config-value" id="dashboard-daily-ad-limit">Loading...</span></li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">Points Per Ad<span class="config-value" id="dashboard-points-per-ad">Loading...</span></li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">Coins for Conversion<span class="config-value" id="dashboard-coins-for-conversion">Loading...</span></li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">Value Per Conversion ($)<span class="config-value" id="dashboard-value-per-conversion">Loading...</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h4>Recent User Activity</h4>
+                                <ul class="list-group" id="recent-user-activity">
+                                    <li class="list-group-item">No recent activity.</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h4>Recent Withdrawal Requests</h4>
+                                <ul class="list-group" id="recent-withdrawal-requests">
+                                    <li class="list-group-item">No recent requests.</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -735,9 +744,11 @@
         let replyMessagesListener = null; // Listener for real-time updates in the reply modal
 
         // - DOM Elements -
-        const loadingSpinner = document.getElementById('loading-spinner');
+        const globalLoadingSpinner = document.getElementById('loading-spinner');
         const loginSection = document.getElementById('login-section');
         const dashboardSection = document.getElementById('dashboard-section');
+        const dashboardLoadingSpinner = document.getElementById('dashboard-loading-spinner'); // NEW
+        const dashboardContent = document.getElementById('dashboard-content'); // NEW
         const configSection = document.getElementById('config-section');
         const usersSection = document.getElementById('users-section');
         const withdrawalsSection = document.getElementById('withdrawals-section');
@@ -769,7 +780,7 @@
             loginSection.style.display = 'none';
             enableSidebarLinks();
             showSection(dashboardSection);
-            loadAppConfig();
+            loadDashboardData(); // Load dashboard data first
             loadUsers();
             loadWithdrawals();
             loadNotices();
@@ -808,13 +819,124 @@
             section.classList.add('active');
         }
 
-        function showLoading(show) {
-            if (show) {
-                loadingSpinner.style.display = 'flex';
-            } else {
-                loadingSpinner.style.display = 'none';
+        function showLoading(show, target = 'global') {
+            if (target === 'dashboard') {
+                if (show) {
+                    dashboardLoadingSpinner.style.display = 'flex';
+                    dashboardContent.style.display = 'none'; // Hide content during load
+                } else {
+                    dashboardLoadingSpinner.style.display = 'none';
+                    dashboardContent.style.display = 'block'; // Show content after load
+                }
+            } else { // Global loading
+                if (show) {
+                    globalLoadingSpinner.style.display = 'flex';
+                } else {
+                    globalLoadingSpinner.style.display = 'none';
+                }
             }
         }
+
+        // - Dashboard Data Loading -
+        async function loadDashboardData() {
+            showLoading(true, 'dashboard');
+            try {
+                // Load users, withdrawals, and app config in parallel
+                const [usersSnapshot, withdrawalsSnapshot, configSnapshot] = await Promise.all([
+                    database.ref('users').once('value'),
+                    database.ref('withdrawals').once('value'),
+                    database.ref('appConfig').once('value')
+                ]);
+
+                const users = usersSnapshot.val() || {};
+                const withdrawals = withdrawalsSnapshot.val() || {};
+                appConfig = configSnapshot.val() || {};
+
+                // If no config exists, initialize with defaults including resetTimerHours
+                if (Object.keys(appConfig).length === 0) {
+                    appConfig = {
+                        pointsPerAd: 10,
+                        coinsForConversion: 1000,
+                        valuePerConversion: 0.30,
+                        referralRewardCoins: 10,
+                        referralClaimThreshold: 200,
+                        minWithdrawAmount: 5,
+                        dailyAdLimitPerUser: 10,
+                        isAdSystemActive: true,
+                        resetTimerHours: 12 // Default reset timer
+                    };
+                    console.log("App config initialized with defaults:", appConfig);
+                }
+
+                // Calculate dashboard stats
+                let totalUsers = 0;
+                let totalBalance = 0;
+                let pendingWithdrawals = 0;
+
+                for (const userId in users) {
+                    totalUsers++;
+                    totalBalance += users[userId].balance || 0;
+                }
+
+                for (const reqId in withdrawals) {
+                    if (withdrawals[reqId].status === 'Pending') {
+                        pendingWithdrawals++;
+                    }
+                }
+
+                // Update dashboard elements
+                document.getElementById('total-users-count').textContent = totalUsers;
+                document.getElementById('total-balance-sum').textContent = totalBalance.toFixed(2);
+                document.getElementById('pending-withdrawals-count').textContent = pendingWithdrawals;
+
+                // Update dashboard config values
+                document.getElementById('dashboard-ad-system-status').textContent = appConfig.isAdSystemActive ? 'Active' : 'Inactive';
+                document.getElementById('dashboard-daily-ad-limit').textContent = appConfig.dailyAdLimitPerUser || 'N/A';
+                document.getElementById('dashboard-points-per-ad').textContent = appConfig.pointsPerAd || 'N/A';
+                document.getElementById('dashboard-coins-for-conversion').textContent = appConfig.coinsForConversion || 'N/A';
+                document.getElementById('dashboard-value-per-conversion').textContent = appConfig.valuePerConversion || 'N/A';
+
+                // Update recent activity (example logic, adapt as needed)
+                const recentUserActivity = document.getElementById('recent-user-activity');
+                recentUserActivity.innerHTML = ''; // Clear previous
+                const sortedUsers = Object.entries(users).sort((a, b) => new Date(b[1].createdAt || 0) - new Date(a[1].createdAt || 0)).slice(0, 5);
+                sortedUsers.forEach(([userId, user]) => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <div>
+                            <strong>${user.firstName || 'User'}</strong> (@${user.username || userId})
+                        </div>
+                        <small>${new Date(user.createdAt || 0).toLocaleString()}</small>
+                    `;
+                    recentUserActivity.appendChild(li);
+                });
+
+                // Update recent withdrawals (example logic, adapt as needed)
+                const recentWithdrawalRequests = document.getElementById('recent-withdrawal-requests');
+                recentWithdrawalRequests.innerHTML = ''; // Clear previous
+                const sortedWithdrawals = Object.entries(withdrawals).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
+                sortedWithdrawals.forEach(([key, req]) => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.innerHTML = `
+                        <div>
+                            <strong>@${req.username || req.userId}</strong> - $${req.amount.toFixed(2)}
+                        </div>
+                        <span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span>
+                        <small class="text-muted">${new Date(req.timestamp).toLocaleString()}</small>
+                    `;
+                    recentWithdrawalRequests.appendChild(li);
+                });
+
+            } catch (error) {
+                console.error("Failed to load dashboard data:", error);
+                showToast('Error', 'Failed to load dashboard data.', true);
+            } finally {
+                showLoading(false, 'dashboard');
+            }
+        }
+
 
         // - App Configuration Management -
         function loadAppConfigForEdit() {
@@ -826,7 +948,8 @@
             document.getElementById('minWithdrawAmount').value = appConfig.minWithdrawAmount || '';
             document.getElementById('dailyAdLimitPerUser').value = appConfig.dailyAdLimitPerUser || '';
             document.getElementById('resetTimerHours').value = appConfig.resetTimerHours || '';
-            document.getElementById('isAdSystemActive').value = appConfig.isAdSystemActive.toString();
+            // Convert boolean value to string for select element
+            document.getElementById('isAdSystemActive').value = appConfig.isAdSystemActive === true ? 'true' : 'false';
         }
 
         async function saveAppConfig() {
@@ -848,8 +971,9 @@
                 await database.ref('appConfig').update(updatedConfig);
                 console.log("App config updated successfully.");
                 showToast('Success', 'App configuration updated.');
-                // Reload the config to update internal state
-                loadAppConfig();
+                // Reload the config to update internal state and dashboard
+                await loadDashboardData(); // Load data again to update dashboard
+                loadAppConfigForEdit(); // Populate the config form with new values
             } catch (error) {
                 console.error("Failed to update app config:", error);
                 showToast('Error', 'Failed to update app configuration.', true);
@@ -1186,71 +1310,38 @@
 
 
         // - Data Loading Functions -
-        async function loadAppConfig() {
-            showLoading(true);
-            try {
-                const snapshot = await database.ref('appConfig').once('value');
-                appConfig = snapshot.val() || {};
-
-                // If no config exists, initialize with defaults including resetTimerHours
-                if (Object.keys(appConfig).length === 0) {
-                    appConfig = {
-                        pointsPerAd: 10,
-                        coinsForConversion: 1000,
-                        valuePerConversion: 0.30,
-                        referralRewardCoins: 10,
-                        referralClaimThreshold: 200,
-                        minWithdrawAmount: 5,
-                        dailyAdLimitPerUser: 10,
-                        isAdSystemActive: true,
-                        resetTimerHours: 12 // Default reset timer
-                    };
-                    console.log("App config initialized with defaults:", appConfig);
-                    // Optionally, save defaults to Firebase if they don't exist
-                    // await database.ref('appConfig').set(appConfig);
-                }
-                updateDashboardStats();
-                loadAppConfigForEdit(); // Populate the config form
-            } catch (error) {
-                console.error("Failed to load app config:", error);
-                showToast('Error', 'Failed to load app configuration.', true);
-            } finally {
-                showLoading(false);
-            }
-        }
-
         async function loadUsers() {
-            showLoading(true);
+            showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('users').once('value');
                 usersData = snapshot.val() || {};
                 renderUsersTable(); // Initially render without filter
-                updateDashboardStats();
+                // Update dashboard stats here too if needed, but loadDashboardData() is already called
             } catch (error) {
                 console.error("Failed to load users:", error);
-                showToast('Error', 'Failed to load users.', true);
+                showToast('Error', 'Failed to load users data.', true);
             } finally {
-                showLoading(false);
+                showLoading(false, 'global');
             }
         }
 
         async function loadWithdrawals() {
-            showLoading(true);
+            showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('withdrawals').once('value');
                 withdrawalsData = snapshot.val() || {};
                 renderWithdrawalsTable();
-                updateDashboardStats();
+                // Update dashboard stats here too if needed, but loadDashboardData() is already called
             } catch (error) {
                 console.error("Failed to load withdrawals:", error);
                 showToast('Error', 'Failed to load withdrawals.', true);
             } finally {
-                showLoading(false);
+                showLoading(false, 'global');
             }
         }
 
         async function loadNotices() {
-            showLoading(true);
+            showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('notices').once('value');
                 noticesData = snapshot.val() || {};
@@ -1259,12 +1350,12 @@
                 console.error("Failed to load notices:", error);
                 showToast('Error', 'Failed to load notices.', true);
             } finally {
-                showLoading(false);
+                showLoading(false, 'global');
             }
         }
 
         async function loadMessages() {
-            showLoading(true);
+            showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('users').orderByChild('lastMessageTimestamp').once('value'); // Assuming you have a lastMessageTimestamp
                 const users = snapshot.val() || {};
@@ -1286,62 +1377,10 @@
                 console.error("Failed to load messages:", error);
                 showToast('Error', 'Failed to load messages.', true);
             } finally {
-                showLoading(false);
+                showLoading(false, 'global');
             }
         }
 
-
-        // - Dashboard Stats -
-        function updateDashboardStats() {
-            let totalUsers = 0;
-            let totalPoints = 0;
-            let totalBalance = 0;
-            let pendingWithdrawals = 0;
-
-            for (const userId in usersData) {
-                totalUsers++;
-                totalPoints += usersData[userId].points || 0;
-                totalBalance += usersData[userId].balance || 0;
-            }
-
-            for (const reqId in withdrawalsData) {
-                if (withdrawalsData[reqId].status === 'Pending') {
-                    pendingWithdrawals++;
-                }
-            }
-
-            document.getElementById('total-users').textContent = totalUsers;
-            document.getElementById('total-points').textContent = totalPoints;
-            document.getElementById('total-balance').textContent = totalBalance.toFixed(2);
-            document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
-
-            // Populate recent withdrawals
-            const recentWithdrawalsList = document.getElementById('recent-withdrawals-list');
-            recentWithdrawalsList.innerHTML = '';
-            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
-            sortedWithdrawals.forEach(([key, req]) => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.innerHTML = `
-                    ${req.username ? '@' + req.username : req.userId} - $${req.amount.toFixed(2)}
-                    <span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : 'danger'} status-badge">${req.status}</span>
-                `;
-                recentWithdrawalsList.appendChild(li);
-            });
-
-            // Populate recent users
-            const recentUsersList = document.getElementById('recent-users-list');
-            recentUsersList.innerHTML = '';
-            const sortedUsers = Object.entries(usersData).sort((a, b) => new Date(b[1].createdAt || 0) - new Date(a[1].createdAt || 0)).slice(0, 5);
-            sortedUsers.forEach(([userId, user]) => {
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.innerHTML = `
-                    ${user.firstName || 'User'} (@${user.username || userId}) - Points: ${user.points || 0}
-                `;
-                recentUsersList.appendChild(li);
-            });
-        }
 
         // - Helper Functions -
         function showToast(title, message, isError = false) {
@@ -1420,6 +1459,7 @@
                 console.log(`Withdrawal ${requestId} status updated to ${newStatus}`);
                 showToast('Success', `Withdrawal status updated to ${newStatus}.`);
                 loadWithdrawals(); // Reload withdrawals table
+                loadDashboardData(); // Reload dashboard to update counts
             } catch (error) {
                 console.error("Failed to update withdrawal status:", error);
                 showToast('Error', 'Failed to update withdrawal status.', true);
