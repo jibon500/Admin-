@@ -719,7 +719,7 @@
         // - State Variables -
         let appConfig = {};
         let usersData = {};
-        let withdrawalsData = {};
+        let withdrawalsData = {}; // Updated: Now stores composite key -> {userId, requestId, ...data}
         let noticesData = {};
         let messagesData = {}; // To store messages for the messages section
         let currentReplyUserId = null; // To track which user we are replying to in the modal
@@ -763,7 +763,7 @@
             loadAppConfig(); // Load config first to ensure appConfig is populated
             loadDashboardData(); // Load dashboard data first
             loadUsers();
-            loadWithdrawals();
+            loadWithdrawals(); // Load withdrawals data
             loadNotices();
             loadMessages(); // Load messages data
         }
@@ -928,7 +928,7 @@
                 // Load users, withdrawals, and app config in parallel
                 const [usersSnapshot, withdrawalsSnapshot] = await Promise.all([
                     database.ref('users').once('value'),
-                    database.ref('withdrawals').once('value')
+                    database.ref('withdrawals').once('value') // This might be old structure, loadWithdrawals handles new one
                     // appConfig is already loaded in loginByUid
                 ]);
 
@@ -945,8 +945,9 @@
                     totalBalance += users[userId].balance || 0;
                 }
 
-                for (const reqId in withdrawals) {
-                    if (withdrawals[reqId].status === 'Pending') {
+                // Count pending from new structure (loaded by loadWithdrawals)
+                for (const key in withdrawalsData) {
+                    if (withdrawalsData[key].status === 'Pending') {
                         pendingWithdrawals++;
                     }
                 }
@@ -991,7 +992,8 @@
                 // Update recent withdrawals (example logic, adapt as needed)
                 const recentWithdrawalRequests = document.getElementById('recent-withdrawal-requests');
                 recentWithdrawalRequests.innerHTML = ''; // Clear previous
-                const sortedWithdrawals = Object.entries(withdrawals).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
+                // Use the new withdrawalsData structure
+                const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
                 sortedWithdrawals.forEach(([key, req]) => {
                     const li = document.createElement('li');
                     li.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -1009,6 +1011,98 @@
                 console.error("Failed to load dashboard ", error);
                 showToast('Error', 'Failed to load dashboard data.', true);
             } // Removed finally block with showLoading(false, 'dashboard');
+        }
+
+
+        // - Withdrawals Management - Updated to load from user's withdrawHistory
+        async function loadWithdrawals() {
+            // Removed showLoading(true, 'global');
+            try {
+                const usersSnapshot = await database.ref('users').once('value');
+                const users = usersSnapshot.val() || {};
+
+                // Clear existing data
+                withdrawalsData = {};
+
+                // Iterate through users and their withdrawHistory
+                for (const userId in users) {
+                    if (users[userId].withdrawHistory) {
+                        for (const requestId in users[userId].withdrawHistory) {
+                            // Add userId and requestId to the request data for easier handling
+                            withdrawalsData[`${userId}/${requestId}`] = {
+                                ...users[userId].withdrawHistory[requestId],
+                                userId: userId,
+                                requestId: requestId
+                            };
+                        }
+                    }
+                }
+
+                renderWithdrawalsTable();
+                // updateDashboardStats(); // Update dashboard when withdrawals load - This function was removed, using loadDashboardData instead
+                loadDashboardData(); // Reload dashboard stats which depend on withdrawalsData
+            } catch (error) {
+                console.error("Failed to load withdrawals:", error);
+                showToast('Error', 'Failed to load withdrawal requests.', true);
+            } // Removed finally block with showLoading(false, 'global');
+        }
+
+        // Updated renderWithdrawalsTable to handle composite keys
+        function renderWithdrawalsTable() {
+            const tableBody = document.getElementById('withdrawals-table-body');
+            tableBody.innerHTML = '';
+
+            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
+
+            if (sortedWithdrawals.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No withdrawals found.</td></tr>';
+                return;
+            }
+
+            sortedWithdrawals.forEach(([key, req]) => {
+                // Extract userId and requestId from the composite key
+                const [userId, requestId] = key.split('/');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${requestId}</td>
+                    <td>${userId}</td>
+                    <td>${req.username ? '@' + req.username : 'N/A'}</td>
+                    <td>$${req.amount.toFixed(2)}</td>
+                    <td>${new Date(req.timestamp).toLocaleString()}</td>
+                    <td><span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-success action-btn" onclick="updateWithdrawalStatus('${key}', '${requestId}', '${userId}', 'Success')">Success</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="updateWithdrawalStatus('${key}', '${requestId}', '${userId}', 'Rejected')">Reject</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Updated updateWithdrawalStatus to use composite key and userId/requestId
+        async function updateWithdrawalStatus(compositeKey, requestId, userId, newStatus) {
+            if (!userId || !requestId) {
+                showToast('Error', 'User ID or Request ID is missing.', true);
+                return;
+            }
+            try {
+                // Update status in Firebase under the user's withdrawHistory
+                await database.ref(`users/${userId}/withdrawHistory/${requestId}/status`).set(newStatus);
+
+                // Update local state if the entry exists
+                if (withdrawalsData[compositeKey]) {
+                    withdrawalsData[compositeKey].status = newStatus;
+                }
+
+                console.log(`Withdrawal ${requestId} for user ${userId} status updated to ${newStatus}`);
+                showToast('Success', `Withdrawal status updated to ${newStatus}.`);
+
+                // Reload withdrawals table and dashboard stats
+                loadWithdrawals(); // This will call renderWithdrawalsTable and loadDashboardData
+            } catch (error) {
+                console.error("Failed to update withdrawal status:", error);
+                showToast('Error', 'Failed to update withdrawal status.', true);
+            }
         }
 
 
@@ -1045,36 +1139,6 @@
                         <button class="btn btn-sm btn-outline-info action-btn" onclick="promptEditBalance('${userId}', ${user.balance || 0})"><i class="fas fa-edit"></i> Balance</button>
                         <button class="btn btn-sm btn-outline-danger action-btn" onclick="toggleUserBlock('${userId}', ${user.isBlocked})"><i class="fas fa-${user.isBlocked ? 'unlock' : 'lock'}"></i> ${user.isBlocked ? 'Unblock' : 'Block'}</button>
                         <button class="btn btn-sm btn-outline-secondary action-btn" onclick="updateUserAdStatus('${userId}', '${user.adStatus || 'Active'}')"><i class="fas fa-${(user.adStatus === 'Inactive') ? 'play' : 'pause'}"></i> ${(user.adStatus === 'Inactive') ? 'Activate' : 'Deactivate'}</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // - Withdrawals Management -
-        function renderWithdrawalsTable() {
-            const tableBody = document.getElementById('withdrawals-table-body');
-            tableBody.innerHTML = '';
-
-            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-
-            if (sortedWithdrawals.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No withdrawals found.</td></tr>';
-                return;
-            }
-
-            sortedWithdrawals.forEach(([key, req]) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${key}</td>
-                    <td>${req.userId}</td>
-                    <td>${req.username ? '@' + req.username : 'N/A'}</td>
-                    <td>$${req.amount.toFixed(2)}</td>
-                    <td>${new Date(req.timestamp).toLocaleString()}</td>
-                    <td><span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-success action-btn" onclick="updateWithdrawalStatus('${key}', 'Success')">Success</button>
-                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="updateWithdrawalStatus('${key}', 'Rejected')">Reject</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -1167,7 +1231,7 @@
             }
         }
 
-        // - Messages Management -
+        // - Messages Management - Updated for real-time replies
         function renderMessagesTable() {
             const tableBody = document.getElementById('messages-table-body');
             tableBody.innerHTML = '';
@@ -1227,6 +1291,7 @@
             }
         }
 
+        // Updated openMessageReplyModal to set up real-time listener
         function openMessageReplyModal(userId) {
             currentReplyUserId = userId;
             const modal = new bootstrap.Modal(document.getElementById('messageReplyModal'));
@@ -1236,6 +1301,29 @@
 
             // Load existing messages for this user
             loadReplyMessageHistory(userId);
+
+            // Remove previous listener if it exists and was for a different user
+            if (replyMessagesListener && window.lastListenedUserId !== userId) {
+                 const previousUserId = window.lastListenedUserId;
+                 if (previousUserId) {
+                     database.ref(`users/${previousUserId}/adminMessages`).off('value', replyMessagesListener);
+                     console.log(`Removed listener for user ${previousUserId}`);
+                 }
+                 replyMessagesListener = null; // Reset listener reference
+            }
+
+            // Setup real-time listener for updates
+            if (!replyMessagesListener) { // Only set up if not already active for this user
+                const userRef = database.ref(`users/${userId}/adminMessages`);
+                replyMessagesListener = userRef.on('value', (snapshot) => {
+                    const messages = snapshot.val();
+                    renderReplyMessageHistory(messages);
+                    console.log("Real-time message update received for user:", userId);
+                });
+                window.lastListenedUserId = userId; // Track which user is being listened to
+                console.log(`Set up listener for user ${userId}`);
+            }
+
 
             // Setup send button listener (if not already done)
             const sendBtn = document.getElementById('send-reply-message');
@@ -1255,48 +1343,57 @@
 
             try {
                 const snapshot = await database.ref(`users/${userId}/adminMessages`).once('value');
-                const messages = snapshot.val() || {};
-                const sortedMessages = Object.entries(messages).sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp)); // Sort by timestamp
-
-                messageHistoryDiv.innerHTML = ''; // Clear loading message
-
-                if (sortedMessages.length === 0) {
-                    messageHistoryDiv.innerHTML = '<p class="text-center text-muted">No messages yet. Start a conversation!</p>';
-                    return;
-                }
-
-                sortedMessages.forEach(([msgId, msg]) => {
-                    const isUser = msg.sender === 'user';
-                    const bubbleClass = isUser ? 'received-message' : 'sent-message';
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = `message-bubble ${bubbleClass}`;
-                    messageDiv.innerHTML = `
-                        ${msg.text}<br>
-                        <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
-                    `;
-                    messageHistoryDiv.appendChild(messageDiv);
-                });
-
-                // Scroll to bottom after adding messages
-                messageHistoryDiv.scrollTop = messageHistoryDiv.scrollHeight;
+                const messages = snapshot.val();
+                renderReplyMessageHistory(messages);
             } catch (error) {
-                console.error("Failed to load reply message history:", error);
+                console.error("Error loading reply message history:", error);
                 messageHistoryDiv.innerHTML = '<p class="text-center text-danger">Failed to load messages.</p>';
             }
         }
 
-        // Function to send reply message
-        async function sendReplyMessage() {
-            if (!currentReplyUserId) {
-                showToast('Error', 'No user selected for reply.', true);
+        // Function to render messages in the reply modal
+        function renderReplyMessageHistory(messagesData) {
+            const historyDiv = document.getElementById('reply-message-history');
+            historyDiv.innerHTML = ''; // Clear previous content
+
+            if (!messagesData) {
+                const noMsgElement = document.createElement('p');
+                noMsgElement.className = 'text-center text-muted';
+                noMsgElement.textContent = 'No messages yet. Start a conversation!';
+                historyDiv.appendChild(noMsgElement);
                 return;
             }
 
+            const messages = Object.entries(messagesData).sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp)); // Sort by timestamp
+
+            messages.forEach(([msgId, msg]) => {
+                const isUser = msg.sender === 'user';
+                const bubbleClass = isUser ? 'received-message' : 'sent-message';
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message-bubble ${bubbleClass}`;
+                messageDiv.innerHTML = `
+                    ${msg.text}<br>
+                    <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
+                `;
+                historyDiv.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom after adding messages
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+
+
+        // Updated Function to send reply message
+        async function sendReplyMessage() {
+            const userId = document.getElementById('reply-user-id').value;
             const input = document.getElementById('reply-message-input');
             const messageText = input.value.trim();
-            if (!messageText) return;
+            if (!messageText || !userId) {
+                showToast('Error', 'Message text or user ID is missing.', true);
+                return;
+            }
 
-            const newMessageRef = database.ref(`users/${currentReplyUserId}/adminMessages`).push();
+            const newMessageRef = database.ref(`users/${userId}/adminMessages`).push();
             const newMessageData = {
                 text: messageText,
                 sender: 'admin', // Admin is sending
@@ -1305,12 +1402,12 @@
 
             try {
                 await newMessageRef.set(newMessageData);
-                console.log("Reply message sent successfully.");
-                input.value = ''; // Clear input
-                // The real-time listener will update the UI
+                console.log("Reply message sent successfully to user:", userId);
+                input.value = ''; // Clear input - This should trigger the listener to update the UI
+                // The real-time listener in openMessageReplyModal will automatically update the UI
             } catch (error) {
-                console.error("Failed to send reply message:", error);
-                showToast('Error', 'Failed to send message.', true);
+                console.error("Error sending reply message:", error);
+                showToast('Error', 'Failed to send reply message. Please try again.', true);
             }
         }
 
@@ -1352,19 +1449,6 @@
             } catch (error) {
                 console.error("Failed to load users:", error);
                 showToast('Error', 'Failed to load users data.', true);
-            } // Removed finally block with showLoading(false, 'global');
-        }
-
-        async function loadWithdrawals() {
-            // Removed showLoading(true, 'global');
-            try {
-                const snapshot = await database.ref('withdrawals').once('value');
-                withdrawalsData = snapshot.val() || {};
-                renderWithdrawalsTable();
-                // Update dashboard stats here too if needed, but loadDashboardData() is already called
-            } catch (error) {
-                console.error("Failed to load withdrawals:", error);
-                showToast('Error', 'Failed to load withdrawals.', true);
             } // Removed finally block with showLoading(false, 'global');
         }
 
@@ -1477,18 +1561,6 @@
             }
         }
 
-        async function updateWithdrawalStatus(requestId, newStatus) {
-            try {
-                await database.ref(`withdrawals/${requestId}`).update({ status: newStatus });
-                console.log(`Withdrawal ${requestId} status updated to ${newStatus}`);
-                showToast('Success', `Withdrawal status updated to ${newStatus}.`);
-                loadWithdrawals(); // Reload withdrawals table
-                loadDashboardData(); // Reload dashboard to update counts
-            } catch (error) {
-                console.error("Failed to update withdrawal status:", error);
-                showToast('Error', 'Failed to update withdrawal status.', true);
-            }
-        }
 
         async function deleteNotice(key) {
             if (!key) {
