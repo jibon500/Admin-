@@ -114,11 +114,6 @@
             color: #212529; /* Bootstrap dark color */
             margin-right: auto; /* Align left for user */
         }
-        /* - Update: Hide global loading spinner by default - */
-        .loading-spinner {
-            display: none;
-        }
-        /* - End Update - */
     </style>
 </head>
 <body>
@@ -171,13 +166,6 @@
     <div class="container-fluid main-panel">
         <div class="row">
             <div class="col-md-12">
-                <!-- Global Loading Spinner (Hidden by default) -->
-                <div id="loading-spinner" class="d-flex justify-content-center align-items-center loading-spinner" style="height: 80vh;">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-
                 <!-- Login Section -->
                 <div id="login-section" class="section active">
                     <div class="row justify-content-center">
@@ -204,14 +192,8 @@
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Dashboard</h1>
                     </div>
-                    <!-- Dashboard Loading Spinner (Visible only during dashboard load) -->
-                    <div id="dashboard-loading-spinner" class="d-flex justify-content-center align-items-center" style="height: 50vh; display: none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
-                    <!-- Dashboard Content (Initially hidden, shown after load) -->
-                    <div id="dashboard-content" style="display: none;">
+                    <!-- Dashboard Content (Now visible by default, no spinner) -->
+                    <div id="dashboard-content" style="display: block;">
                         <div class="row">
                             <div class="col-md-4 mb-4">
                                 <div class="card text-white bg-primary">
@@ -744,10 +726,8 @@
         let replyMessagesListener = null; // Listener for real-time updates in the reply modal
 
         // - DOM Elements -
-        const globalLoadingSpinner = document.getElementById('loading-spinner');
         const loginSection = document.getElementById('login-section');
         const dashboardSection = document.getElementById('dashboard-section');
-        const dashboardLoadingSpinner = document.getElementById('dashboard-loading-spinner'); // NEW
         const dashboardContent = document.getElementById('dashboard-content'); // NEW
         const configSection = document.getElementById('config-section');
         const usersSection = document.getElementById('users-section');
@@ -819,27 +799,16 @@
             section.classList.add('active');
         }
 
+        // - NEW: showLoading function now does nothing -
         function showLoading(show, target = 'global') {
-            if (target === 'dashboard') {
-                if (show) {
-                    dashboardLoadingSpinner.style.display = 'flex';
-                    dashboardContent.style.display = 'none'; // Hide content during load
-                } else {
-                    dashboardLoadingSpinner.style.display = 'none';
-                    dashboardContent.style.display = 'block'; // Show content after load
-                }
-            } else { // Global loading
-                if (show) {
-                    globalLoadingSpinner.style.display = 'flex';
-                } else {
-                    globalLoadingSpinner.style.display = 'none';
-                }
-            }
+            // Do nothing - No loading spinners
         }
+        // - END NEW -
+
 
         // - Dashboard Data Loading -
         async function loadDashboardData() {
-            showLoading(true, 'dashboard');
+            // Removed showLoading(true, 'dashboard');
             try {
                 // Load users, withdrawals, and app config in parallel
                 const [usersSnapshot, withdrawalsSnapshot, configSnapshot] = await Promise.all([
@@ -930,11 +899,9 @@
                 });
 
             } catch (error) {
-                console.error("Failed to load dashboard data:", error);
+                console.error("Failed to load dashboard ", error);
                 showToast('Error', 'Failed to load dashboard data.', true);
-            } finally {
-                showLoading(false, 'dashboard');
-            }
+            } // Removed finally block with showLoading(false, 'dashboard');
         }
 
 
@@ -1311,7 +1278,7 @@
 
         // - Data Loading Functions -
         async function loadUsers() {
-            showLoading(true, 'global');
+            // Removed showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('users').once('value');
                 usersData = snapshot.val() || {};
@@ -1320,13 +1287,11 @@
             } catch (error) {
                 console.error("Failed to load users:", error);
                 showToast('Error', 'Failed to load users data.', true);
-            } finally {
-                showLoading(false, 'global');
-            }
+            } // Removed finally block with showLoading(false, 'global');
         }
 
         async function loadWithdrawals() {
-            showLoading(true, 'global');
+            // Removed showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('withdrawals').once('value');
                 withdrawalsData = snapshot.val() || {};
@@ -1335,13 +1300,11 @@
             } catch (error) {
                 console.error("Failed to load withdrawals:", error);
                 showToast('Error', 'Failed to load withdrawals.', true);
-            } finally {
-                showLoading(false, 'global');
-            }
+            } // Removed finally block with showLoading(false, 'global');
         }
 
         async function loadNotices() {
-            showLoading(true, 'global');
+            // Removed showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('notices').once('value');
                 noticesData = snapshot.val() || {};
@@ -1349,13 +1312,11 @@
             } catch (error) {
                 console.error("Failed to load notices:", error);
                 showToast('Error', 'Failed to load notices.', true);
-            } finally {
-                showLoading(false, 'global');
-            }
+            } // Removed finally block with showLoading(false, 'global');
         }
 
         async function loadMessages() {
-            showLoading(true, 'global');
+            // Removed showLoading(true, 'global');
             try {
                 const snapshot = await database.ref('users').orderByChild('lastMessageTimestamp').once('value'); // Assuming you have a lastMessageTimestamp
                 const users = snapshot.val() || {};
@@ -1376,9 +1337,7 @@
             } catch (error) {
                 console.error("Failed to load messages:", error);
                 showToast('Error', 'Failed to load messages.', true);
-            } finally {
-                showLoading(false, 'global');
-            }
+            } // Removed finally block with showLoading(false, 'global');
         }
 
 
