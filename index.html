@@ -114,6 +114,11 @@
             color: #212529; /* Bootstrap dark color */
             margin-right: auto; /* Align left for user */
         }
+        /* - Update: Hide global loading spinner by default - */
+        .loading-spinner {
+            display: none;
+        }
+        /* - End Update - */
     </style>
 </head>
 <body>
@@ -121,40 +126,38 @@
     <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
         <div class="position-sticky pt-3 sidebar-sticky">
             <ul class="nav flex-column">
-                <!-- Initially disabled links -->
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-dashboard-link">
+                    <a class="nav-link" href="#" onclick="showSection('dashboard-section')">
                         <i class="fas fa-tachometer-alt"></i> Dashboard
                     </a>
                 </li>
-                <!-- New Link for Theme Settings - Moved before Config -->
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-theme-link">
+                    <a class="nav-link" href="#" onclick="showSection('theme-section')">
                         <i class="fas fa-palette"></i> Theme Settings
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-config-link">
+                    <a class="nav-link" href="#" onclick="showSection('config-section')">
                         <i class="fas fa-cogs"></i> App Configuration
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-users-link">
+                    <a class="nav-link" href="#" onclick="showSection('users-section')">
                         <i class="fas fa-users"></i> Users
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-withdrawals-link">
+                    <a class="nav-link" href="#" onclick="showSection('withdrawals-section')">
                         <i class="fas fa-money-bill-wave"></i> Withdrawals
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-notices-link">
+                    <a class="nav-link" href="#" onclick="showSection('notices-section')">
                         <i class="fas fa-bullhorn"></i> Notices
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-messages-link">
+                    <a class="nav-link" href="#" onclick="showSection('messages-section')">
                         <i class="fas fa-comments"></i> Messages
                     </a>
                 </li>
@@ -192,67 +195,64 @@
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Dashboard</h1>
                     </div>
-                    <!-- Dashboard Content (Now visible by default, no spinner) -->
-                    <div id="dashboard-content" style="display: block;">
-                        <div class="row">
-                            <div class="col-md-4 mb-4">
-                                <div class="card text-white bg-primary">
-                                    <div class="card-header">Total Users</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title" id="total-users-count">0</h5>
-                                        <p class="card-text">Registered users</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-4">
-                                <div class="card text-white bg-success">
-                                    <div class="card-header">Total Balance</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title" id="total-balance-sum">$0.00</h5>
-                                        <p class="card-text">Across all users</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-4">
-                                <div class="card text-white bg-info">
-                                    <div class="card-header">Pending Withdrawals</div>
-                                    <div class="card-body">
-                                        <h5 class="card-title" id="pending-withdrawals-count">0</h5>
-                                        <p class="card-text">Requests awaiting action</p>
-                                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-white bg-primary">
+                                <div class="card-header">Total Users</div>
+                                <div class="card-body">
+                                    <h5 class="card-title" id="total-users-count">0</h5>
+                                    <p class="card-text">Registered users</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <h4>Global Configuration</h4>
-                                <ul class="list-group">
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">Ad System Status<span class="config-value" id="dashboard-ad-system-status">Loading...</span></li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">Daily Ad Limit Per User<span class="config-value" id="dashboard-daily-ad-limit">Loading...</span></li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">Points Per Ad<span class="config-value" id="dashboard-points-per-ad">Loading...</span></li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">Coins for Conversion<span class="config-value" id="dashboard-coins-for-conversion">Loading...</span></li>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">Value Per Conversion ($)<span class="config-value" id="dashboard-value-per-conversion">Loading...</span></li>
-                                </ul>
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-white bg-success">
+                                <div class="card-header">Total Balance</div>
+                                <div class="card-body">
+                                    <h5 class="card-title" id="total-balance-sum">$0.00</h5>
+                                    <p class="card-text">Across all users</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <h4>Recent User Activity</h4>
-                                <ul class="list-group" id="recent-user-activity">
-                                    <li class="list-group-item">No recent activity.</li>
-                                </ul>
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-white bg-info">
+                                <div class="card-header">Pending Withdrawals</div>
+                                <div class="card-body">
+                                    <h5 class="card-title" id="pending-withdrawals-count">0</h5>
+                                    <p class="card-text">Requests awaiting action</p>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <h4>Recent Withdrawal Requests</h4>
-                                <ul class="list-group" id="recent-withdrawal-requests">
-                                    <li class="list-group-item">No recent requests.</li>
-                                </ul>
-                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h4>Global Configuration</h4>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Ad System Status<span class="config-value" id="dashboard-ad-system-status">N/A</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Daily Ad Limit Per User<span class="config-value" id="dashboard-daily-ad-limit">N/A</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Points Per Ad<span class="config-value" id="dashboard-points-per-ad">N/A</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Coins for Conversion<span class="config-value" id="dashboard-coins-for-conversion">N/A</span></li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">Value Per Conversion ($)<span class="config-value" id="dashboard-value-per-conversion">N/A</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h4>Recent User Activity</h4>
+                            <ul class="list-group" id="recent-user-activity">
+                                <li class="list-group-item">Loading...</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>Recent Withdrawal Requests</h4>
+                            <ul class="list-group" id="recent-withdrawal-requests">
+                                <li class="list-group-item">Loading...</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
 
-                <!-- Theme Settings Section (NEW) - Moved before Config -->
+                <!-- Theme Settings Section -->
                 <div id="theme-section" class="section">
                     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                         <h1 class="h2">Theme Settings</h1>
@@ -436,12 +436,10 @@
                                          <div class="row mt-3">
                                             <div class="col-md-6">
                                                 <label for="dailyAdLimitPerUser" class="form-label">Daily Ad Limit Per User</label>
-                                                <!-- Added 'name' attribute -->
                                                 <input type="number" class="form-control" id="dailyAdLimitPerUser" name="dailyAdLimitPerUser" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="resetTimerHours" class="form-label">Reset Timer (Hours)</label>
-                                                <!-- Added 'name' attribute -->
                                                 <input type="number" class="form-control" id="resetTimerHours" name="resetTimerHours" min="1" required>
                                                 <div class="form-text">Number of hours after which the daily ad counter resets for each user.</div>
                                             </div>
@@ -493,7 +491,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="users-table-body">
-                                                <!-- Users will be populated here -->
+                                                <tr><td colspan="8" class="text-center">Loading...</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -529,7 +527,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="withdrawals-table-body">
-                                                <!-- Withdrawals will be populated here -->
+                                                <tr><td colspan="7" class="text-center">Loading...</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -563,7 +561,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="notices-table-body">
-                                                <!-- Notices will be populated here -->
+                                                <tr><td colspan="4" class="text-center">Loading...</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -596,7 +594,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="messages-table-body">
-                                                <!-- Messages will be populated here -->
+                                                <tr><td colspan="4" class="text-center">Loading...</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -624,7 +622,6 @@
                         <label for="notice-title" class="form-label">Title</label>
                         <input type="text" class="form-control" id="notice-title" required>
                     </div>
-                    <!-- Updated Textarea: Added notice-message-large class for larger size -->
                     <textarea class="form-control notice-message-large" id="notice-message" rows="6" required></textarea>
                 </div>
                 <div class="modal-footer">
@@ -676,7 +673,6 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <!-- Clear Messages Button -->
                     <button type="button" class="btn btn-danger" onclick="clearUserMessages()">Clear Messages</button>
                 </div>
             </div>
@@ -719,7 +715,7 @@
         // - State Variables -
         let appConfig = {};
         let usersData = {};
-        let withdrawalsData = {}; // Updated: Now stores composite key -> {userId, requestId, ...data}
+        let withdrawalsData = {}; // Stores composite key -> {userId, requestId, ...data}
         let noticesData = {};
         let messagesData = {}; // To store messages for the messages section
         let currentReplyUserId = null; // To track which user we are replying to in the modal
@@ -728,13 +724,12 @@
         // - DOM Elements -
         const loginSection = document.getElementById('login-section');
         const dashboardSection = document.getElementById('dashboard-section');
-        const dashboardContent = document.getElementById('dashboard-content'); // NEW
         const configSection = document.getElementById('config-section');
         const usersSection = document.getElementById('users-section');
         const withdrawalsSection = document.getElementById('withdrawals-section');
         const noticesSection = document.getElementById('notices-section');
         const messagesSection = document.getElementById('messages-section');
-        const themeSection = document.getElementById('theme-section'); // NEW
+        const themeSection = document.getElementById('theme-section');
 
         // - Authentication -
         function loginByUid() {
@@ -758,108 +753,255 @@
             // If UID is correct
             console.log("Admin logged in with UID:", uid);
             loginSection.style.display = 'none';
-            enableSidebarLinks();
-            showSection(dashboardSection);
-            loadAppConfig(); // Load config first to ensure appConfig is populated
-            loadDashboardData(); // Load dashboard data first
-            loadUsers();
-            loadWithdrawals(); // Load withdrawals data
-            loadNotices();
-            loadMessages(); // Load messages data
+            showSection('dashboard-section');
         }
 
-        function enableSidebarLinks() {
-            document.getElementById('sidebar-dashboard-link').classList.remove('disabled');
-            document.getElementById('sidebar-theme-link').classList.remove('disabled'); // Enable new link (moved)
-            document.getElementById('sidebar-config-link').classList.remove('disabled');
-            document.getElementById('sidebar-users-link').classList.remove('disabled');
-            document.getElementById('sidebar-withdrawals-link').classList.remove('disabled');
-            document.getElementById('sidebar-notices-link').classList.remove('disabled');
-            document.getElementById('sidebar-messages-link').classList.remove('disabled');
-
-            document.getElementById('sidebar-dashboard-link').onclick = () => showSection(dashboardSection);
-            document.getElementById('sidebar-theme-link').onclick = () => showSection(themeSection); // NEW (moved)
-            document.getElementById('sidebar-config-link').onclick = () => showSection(configSection);
-            document.getElementById('sidebar-users-link').onclick = () => showSection(usersSection);
-            document.getElementById('sidebar-withdrawals-link').onclick = () => showSection(withdrawalsSection);
-            document.getElementById('sidebar-notices-link').onclick = () => showSection(noticesSection);
-            document.getElementById('sidebar-messages-link').onclick = () => showSection(messagesSection);
-        }
-
-        function showSection(section) {
+        function showSection(sectionId) {
             // Hide all sections
-            dashboardSection.classList.remove('active');
-            themeSection.classList.remove('active'); // NEW (moved)
-            configSection.classList.remove('active');
-            usersSection.classList.remove('active');
-            withdrawalsSection.classList.remove('active');
-            noticesSection.classList.remove('active');
-            messagesSection.classList.remove('active');
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => section.classList.remove('active'));
 
             // Show the requested section
-            section.classList.add('active');
-            // If config section is shown, ensure the form is loaded with current data
-            if (section.id === 'config-section') {
-                loadAppConfigForEdit();
+            document.getElementById(sectionId).classList.add('active');
+
+            // Specific actions for sections - Set up real-time listeners
+            if (sectionId === 'config-section') {
+                setupAppConfigListener();
+            } else if (sectionId === 'users-section') {
+                setupUsersListener();
+            } else if (sectionId === 'withdrawals-section') {
+                setupWithdrawalsListener();
+            } else if (sectionId === 'messages-section') {
+                setupMessagesListener(); // Load messages when this section is shown
+            } else if (sectionId === 'notices-section') {
+                setupNoticesListener();
+            } else if (sectionId === 'dashboard-section') {
+                setupDashboardListeners(); // Setup all listeners for dashboard
+            } else if (sectionId === 'theme-section') {
+                loadThemeFromFirebase(); // Load theme once when section is shown
             }
         }
 
-        // - NEW: showLoading function now does nothing -
-        function showLoading(show, target = 'global') {
-            // Do nothing - No loading spinners
+        // - NEW: Real-time Listeners -
+        let usersListener = null;
+        let withdrawalsListener = null;
+        let noticesListener = null;
+        let messagesListener = null;
+        let appConfigListener = null;
+        let dashboardUsersListener = null;
+        let dashboardWithdrawalsListener = null;
+
+        function setupUsersListener() {
+            if (usersListener) {
+                database.ref('users').off('value', usersListener);
+            }
+            usersListener = database.ref('users').on('value', (snapshot) => {
+                usersData = snapshot.val() || {};
+                renderUsersTable(); // This will update the table
+            });
         }
-        // - END NEW -
+
+        function setupWithdrawalsListener() {
+            if (withdrawalsListener) {
+                database.ref('users').off('child_changed', withdrawalsListener); // Example: Listen for changes in user's withdrawHistory
+            }
+            // Listen to changes in all users' withdrawHistory
+            withdrawalsListener = database.ref('users').on('value', (usersSnapshot) => {
+                const users = usersSnapshot.val() || {};
+                withdrawalsData = {};
+                for (const userId in users) {
+                    if (users[userId].withdrawHistory) {
+                        for (const requestId in users[userId].withdrawHistory) {
+                            withdrawalsData[`${userId}/${requestId}`] = {
+                                ...users[userId].withdrawHistory[requestId],
+                                userId: userId,
+                                requestId: requestId
+                            };
+                        }
+                    }
+                }
+                renderWithdrawalsTable(); // This will update the table
+            });
+        }
+
+        function setupNoticesListener() {
+            if (noticesListener) {
+                database.ref('notices').off('value', noticesListener);
+            }
+            noticesListener = database.ref('notices').on('value', (snapshot) => {
+                noticesData = snapshot.val() || {};
+                renderNoticesTable(); // This will update the table
+            });
+        }
+
+        function setupMessagesListener() {
+            if (messagesListener) {
+                database.ref('users').off('value', messagesListener); // Listen to changes in all users' adminMessages
+            }
+            messagesListener = database.ref('users').on('value', (usersSnapshot) => {
+                const users = usersSnapshot.val() || {};
+                messagesData = {};
+                for (const userId in users) {
+                    if (users[userId].adminMessages) {
+                        messagesData[userId] = users[userId].adminMessages;
+                    }
+                }
+                renderMessagesTable(); // This will update the table
+            });
+        }
+
+        function setupAppConfigListener() {
+            if (appConfigListener) {
+                database.ref('appConfig').off('value', appConfigListener);
+            }
+            appConfigListener = database.ref('appConfig').on('value', (snapshot) => {
+                appConfig = snapshot.val() || {
+                    pointsPerAd: 10,
+                    coinsForConversion: 1000,
+                    valuePerConversion: 0.30,
+                    referralRewardCoins: 10,
+                    referralClaimThreshold: 200,
+                    minWithdrawAmount: 5,
+                    dailyAdLimitPerUser: 10,
+                    isAdSystemActive: true,
+                    resetTimerHours: 12
+                };
+                loadAppConfigForEdit(); // Populate the config form with new values
+            });
+        }
+
+        function setupDashboardListeners() {
+            // Users for stats
+            if (dashboardUsersListener) {
+                database.ref('users').off('value', dashboardUsersListener);
+            }
+            dashboardUsersListener = database.ref('users').on('value', (snapshot) => {
+                usersData = snapshot.val() || {};
+                updateDashboardStats(); // Update stats
+            });
+
+            // Withdrawals for stats
+            if (dashboardWithdrawalsListener) {
+                database.ref('users').off('value', dashboardWithdrawalsListener);
+            }
+            dashboardWithdrawalsListener = database.ref('users').on('value', (usersSnapshot) => {
+                const users = usersSnapshot.val() || {};
+                withdrawalsData = {};
+                for (const userId in users) {
+                    if (users[userId].withdrawHistory) {
+                        for (const requestId in users[userId].withdrawHistory) {
+                            withdrawalsData[`${userId}/${requestId}`] = {
+                                ...users[userId].withdrawHistory[requestId],
+                                userId: userId,
+                                requestId: requestId
+                            };
+                        }
+                    }
+                }
+                updateDashboardStats(); // Update stats
+                updateRecentWithdrawals(); // Update recent list
+            });
+
+            // App Config for stats display
+            if (appConfigListener) {
+                database.ref('appConfig').off('value', appConfigListener);
+            }
+            appConfigListener = database.ref('appConfig').on('value', (snapshot) => {
+                appConfig = snapshot.val() || {
+                    pointsPerAd: 10,
+                    coinsForConversion: 1000,
+                    valuePerConversion: 0.30,
+                    referralRewardCoins: 10,
+                    referralClaimThreshold: 200,
+                    minWithdrawAmount: 5,
+                    dailyAdLimitPerUser: 10,
+                    isAdSystemActive: true,
+                    resetTimerHours: 12
+                };
+                updateDashboardConfigDisplay(); // Update config display
+            });
+        }
+
+        function updateDashboardStats() {
+            // Total Users
+            const totalUsers = Object.keys(usersData).length;
+            document.getElementById('total-users-count').textContent = totalUsers;
+
+            // Total Balance
+            let totalBalance = 0;
+            for (const userId in usersData) {
+                totalBalance += usersData[userId].balance || 0;
+            }
+            document.getElementById('total-balance-sum').textContent = totalBalance.toFixed(2);
+
+            // Pending Withdrawals
+            let pendingCount = 0;
+            for (const key in withdrawalsData) {
+                if (withdrawalsData[key].status === 'Pending') {
+                    pendingCount++;
+                }
+            }
+            document.getElementById('pending-withdrawals-count').textContent = pendingCount;
+
+            updateRecentUserActivity(); // Update recent activity list
+        }
+
+        function updateDashboardConfigDisplay() {
+            document.getElementById('dashboard-ad-system-status').textContent = appConfig.isAdSystemActive !== undefined ? (appConfig.isAdSystemActive ? 'Active' : 'Inactive') : 'N/A';
+            document.getElementById('dashboard-daily-ad-limit').textContent = appConfig.dailyAdLimitPerUser !== undefined ? appConfig.dailyAdLimitPerUser : 'N/A';
+            document.getElementById('dashboard-points-per-ad').textContent = appConfig.pointsPerAd !== undefined ? appConfig.pointsPerAd : 'N/A';
+            document.getElementById('dashboard-coins-for-conversion').textContent = appConfig.coinsForConversion !== undefined ? appConfig.coinsForConversion : 'N/A';
+            document.getElementById('dashboard-value-per-conversion').textContent = appConfig.valuePerConversion !== undefined ? `$${appConfig.valuePerConversion.toFixed(2)}` : 'N/A';
+        }
+
+        function updateRecentUserActivity() {
+            const recentActivityList = document.getElementById('recent-user-activity');
+            recentActivityList.innerHTML = '';
+            const sortedUsers = Object.values(usersData).sort((a, b) => new Date(b.lastAdWatchTime || 0) - new Date(a.lastAdWatchTime || 0));
+            const recentUsers = sortedUsers.slice(0, 5);
+            if (recentUsers.length === 0) {
+                recentActivityList.innerHTML = '<li class="list-group-item">No recent activity.</li>';
+                return;
+            }
+            recentUsers.forEach(user => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <div>
+                        <strong>${user.firstName || 'User'}</strong> (@${user.username || user.id})
+                    </div>
+                    <small>${new Date(user.lastAdWatchTime || 0).toLocaleString()}</small>
+                `;
+                recentActivityList.appendChild(li);
+            });
+        }
+
+        function updateRecentWithdrawals() {
+            const recentWithdrawalsList = document.getElementById('recent-withdrawal-requests');
+            recentWithdrawalsList.innerHTML = '';
+            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
+            if (sortedWithdrawals.length === 0) {
+                recentWithdrawalsList.innerHTML = '<li class="list-group-item">No recent requests.</li>';
+                return;
+            }
+            sortedWithdrawals.forEach(([key, req]) => {
+                const [userId, requestId] = key.split('/');
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    <div>
+                        <strong>@${req.username || userId}</strong> - $${req.amount.toFixed(2)}
+                    </div>
+                    <span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span><br>
+                    <small class="text-muted">${new Date(req.timestamp).toLocaleString()}</small>
+                `;
+                recentWithdrawalsList.appendChild(li);
+            });
+        }
 
 
         // - App Configuration Management -
-        // Updated loadAppConfig to ensure defaults are set correctly
-        async function loadAppConfig() {
-            try {
-                const snapshot = await database.ref('appConfig').once('value');
-                const config = snapshot.val();
-
-                if (config) {
-                    // Merge loaded config with defaults to ensure all keys exist
-                    appConfig = {
-                        pointsPerAd: config.pointsPerAd || 10,
-                        coinsForConversion: config.coinsForConversion || 1000,
-                        valuePerConversion: config.valuePerConversion || 0.30,
-                        referralRewardCoins: config.referralRewardCoins !== undefined ? config.referralRewardCoins : 10,
-                        referralClaimThreshold: config.referralClaimThreshold !== undefined ? config.referralClaimThreshold : 200,
-                        minWithdrawAmount: config.minWithdrawAmount !== undefined ? config.minWithdrawAmount : 5,
-                        dailyAdLimitPerUser: config.dailyAdLimitPerUser !== undefined ? config.dailyAdLimitPerUser : 10,
-                        isAdSystemActive: config.isAdSystemActive !== undefined ? config.isAdSystemActive : true,
-                        resetTimerHours: config.resetTimerHours !== undefined ? config.resetTimerHours : 12
-                    };
-                    console.log("App config loaded from Firebase:", appConfig);
-                } else {
-                    // If no config exists, initialize with defaults
-                    appConfig = {
-                        pointsPerAd: 10,
-                        coinsForConversion: 1000,
-                        valuePerConversion: 0.30,
-                        referralRewardCoins: 10,
-                        referralClaimThreshold: 200,
-                        minWithdrawAmount: 5,
-                        dailyAdLimitPerUser: 10,
-                        isAdSystemActive: true,
-                        resetTimerHours: 12 // Default reset timer
-                    };
-                    console.log("App config initialized with defaults:", appConfig);
-                    // Optionally, save defaults to Firebase if they don't exist
-                    // await database.ref('appConfig').set(appConfig);
-                }
-                // Update dashboard stats here too if needed, but loadDashboardData() is already called
-                // after loadAppConfig() in loginByUid()
-            } catch (error) {
-                console.error("Failed to load app config:", error);
-                showToast('Error', 'Failed to load app configuration.', true);
-            }
-        }
-
-        // Updated loadAppConfigForEdit to correctly load values from appConfig
         function loadAppConfigForEdit() {
-            console.log("Loading config into form...", appConfig);
             document.getElementById('pointsPerAd').value = appConfig.pointsPerAd || '';
             document.getElementById('coinsForConversion').value = appConfig.coinsForConversion || '';
             document.getElementById('valuePerConversion').value = appConfig.valuePerConversion || '';
@@ -867,19 +1009,16 @@
             document.getElementById('referralClaimThreshold').value = appConfig.referralClaimThreshold || '';
             document.getElementById('minWithdrawAmount').value = appConfig.minWithdrawAmount || '';
             document.getElementById('dailyAdLimitPerUser').value = appConfig.dailyAdLimitPerUser || '';
-            document.getElementById('resetTimerHours').value = appConfig.resetTimerHours || '';
-            // Convert boolean value to string for select element
+            document.getElementById('resetTimerHours').value = appConfig.resetTimerHours || '12'; // Default to 12 if not set
             document.getElementById('isAdSystemActive').value = appConfig.isAdSystemActive === true ? 'true' : 'false';
         }
 
-        // Updated saveAppConfig to correctly parse and save values
         async function saveAppConfig() {
             const configForm = document.getElementById('app-config-form');
             const formData = new FormData(configForm);
             const updatedConfig = {};
 
             for (let [key, value] of formData.entries()) {
-                console.log(`Processing form field: ${key} = ${value}`);
                 // Convert string booleans to actual booleans
                 if (value === 'true') {
                     updatedConfig[key] = true;
@@ -892,216 +1031,24 @@
                         if (!isNaN(parsedValue)) {
                             updatedConfig[key] = parsedValue;
                         } else {
-                            // Handle potential errors for non-numeric values where number is expected
                             console.error(`Invalid number for ${key}: ${value}`);
                             showToast('Error', `Invalid value for ${key}. Please enter a number.`, true);
                             return; // Stop execution if validation fails
                         }
                     } else {
-                        // If it's not a number and not a boolean, keep it as a string (shouldn't happen with number inputs)
                         updatedConfig[key] = value;
                     }
                 }
             }
 
-            console.log("Saving updated config to Firebase:", updatedConfig);
-
             try {
                 await database.ref('appConfig').update(updatedConfig);
                 console.log("App config updated successfully.");
                 showToast('Success', 'App configuration updated.');
-                // Reload the config to update internal state and dashboard
-                await loadAppConfig(); // Load data again to update internal appConfig
-                loadAppConfigForEdit(); // Populate the config form with new values from the updated appConfig
-                loadDashboardData(); // Update dashboard to reflect new config
+                // The real-time listener will automatically update the UI and appConfig variable
             } catch (error) {
                 console.error("Failed to update app config:", error);
                 showToast('Error', 'Failed to update app configuration.', true);
-            }
-        }
-
-
-        // - Dashboard Data Loading -
-        async function loadDashboardData() {
-            // Removed showLoading(true, 'dashboard');
-            try {
-                // Load users, withdrawals, and app config in parallel
-                const [usersSnapshot, withdrawalsSnapshot] = await Promise.all([
-                    database.ref('users').once('value'),
-                    database.ref('withdrawals').once('value') // This might be old structure, loadWithdrawals handles new one
-                    // appConfig is already loaded in loginByUid
-                ]);
-
-                const users = usersSnapshot.val() || {};
-                const withdrawals = withdrawalsSnapshot.val() || {};
-
-                // Calculate dashboard stats
-                let totalUsers = 0;
-                let totalBalance = 0;
-                let pendingWithdrawals = 0;
-
-                for (const userId in users) {
-                    totalUsers++;
-                    totalBalance += users[userId].balance || 0;
-                }
-
-                // Count pending from new structure (loaded by loadWithdrawals)
-                for (const key in withdrawalsData) {
-                    if (withdrawalsData[key].status === 'Pending') {
-                        pendingWithdrawals++;
-                    }
-                }
-
-                // Update dashboard elements
-                document.getElementById('total-users-count').textContent = totalUsers;
-                document.getElementById('total-balance-sum').textContent = totalBalance.toFixed(2);
-                document.getElementById('pending-withdrawals-count').textContent = pendingWithdrawals;
-
-                // Update dashboard config values - Ensure appConfig is available
-                if (appConfig) {
-                    document.getElementById('dashboard-ad-system-status').textContent = appConfig.isAdSystemActive ? 'Active' : 'Inactive';
-                    document.getElementById('dashboard-daily-ad-limit').textContent = appConfig.dailyAdLimitPerUser || 'N/A';
-                    document.getElementById('dashboard-points-per-ad').textContent = appConfig.pointsPerAd || 'N/A';
-                    document.getElementById('dashboard-coins-for-conversion').textContent = appConfig.coinsForConversion || 'N/A';
-                    document.getElementById('dashboard-value-per-conversion').textContent = `$${appConfig.valuePerConversion.toFixed(2)}` || 'N/A';
-                } else {
-                    // Handle case where appConfig is not loaded yet
-                    document.getElementById('dashboard-ad-system-status').textContent = 'Loading...';
-                    document.getElementById('dashboard-daily-ad-limit').textContent = 'Loading...';
-                    document.getElementById('dashboard-points-per-ad').textContent = 'Loading...';
-                    document.getElementById('dashboard-coins-for-conversion').textContent = 'Loading...';
-                    document.getElementById('dashboard-value-per-conversion').textContent = 'Loading...';
-                }
-
-                // Update recent activity (example logic, adapt as needed)
-                const recentUserActivity = document.getElementById('recent-user-activity');
-                recentUserActivity.innerHTML = ''; // Clear previous
-                const sortedUsers = Object.entries(users).sort((a, b) => new Date(b[1].lastAdWatchTime || 0) - new Date(a[1].lastAdWatchTime || 0)).slice(0, 5);
-                sortedUsers.forEach(([userId, user]) => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    li.innerHTML = `
-                        <div>
-                            <strong>${user.firstName || 'User'}</strong> (@${user.username || userId})
-                        </div>
-                        <small>${new Date(user.lastAdWatchTime || 0).toLocaleString()}</small>
-                    `;
-                    recentUserActivity.appendChild(li);
-                });
-
-                // Update recent withdrawals (example logic, adapt as needed)
-                const recentWithdrawalRequests = document.getElementById('recent-withdrawal-requests');
-                recentWithdrawalRequests.innerHTML = ''; // Clear previous
-                // Use the new withdrawalsData structure
-                const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
-                sortedWithdrawals.forEach(([key, req]) => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    li.innerHTML = `
-                        <div>
-                            <strong>@${req.username || req.userId}</strong> - $${req.amount.toFixed(2)}
-                        </div>
-                        <span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span>
-                        <small class="text-muted">${new Date(req.timestamp).toLocaleString()}</small>
-                    `;
-                    recentWithdrawalRequests.appendChild(li);
-                });
-
-            } catch (error) {
-                console.error("Failed to load dashboard ", error);
-                showToast('Error', 'Failed to load dashboard data.', true);
-            } // Removed finally block with showLoading(false, 'dashboard');
-        }
-
-
-        // - Withdrawals Management - Updated to load from user's withdrawHistory
-        async function loadWithdrawals() {
-            // Removed showLoading(true, 'global');
-            try {
-                const usersSnapshot = await database.ref('users').once('value');
-                const users = usersSnapshot.val() || {};
-
-                // Clear existing data
-                withdrawalsData = {};
-
-                // Iterate through users and their withdrawHistory
-                for (const userId in users) {
-                    if (users[userId].withdrawHistory) {
-                        for (const requestId in users[userId].withdrawHistory) {
-                            // Add userId and requestId to the request data for easier handling
-                            withdrawalsData[`${userId}/${requestId}`] = {
-                                ...users[userId].withdrawHistory[requestId],
-                                userId: userId,
-                                requestId: requestId
-                            };
-                        }
-                    }
-                }
-
-                renderWithdrawalsTable();
-                // updateDashboardStats(); // Update dashboard when withdrawals load - This function was removed, using loadDashboardData instead
-                loadDashboardData(); // Reload dashboard stats which depend on withdrawalsData
-            } catch (error) {
-                console.error("Failed to load withdrawals:", error);
-                showToast('Error', 'Failed to load withdrawal requests.', true);
-            } // Removed finally block with showLoading(false, 'global');
-        }
-
-        // Updated renderWithdrawalsTable to handle composite keys
-        function renderWithdrawalsTable() {
-            const tableBody = document.getElementById('withdrawals-table-body');
-            tableBody.innerHTML = '';
-
-            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-
-            if (sortedWithdrawals.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No withdrawals found.</td></tr>';
-                return;
-            }
-
-            sortedWithdrawals.forEach(([key, req]) => {
-                // Extract userId and requestId from the composite key
-                const [userId, requestId] = key.split('/');
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${requestId}</td>
-                    <td>${userId}</td>
-                    <td>${req.username ? '@' + req.username : 'N/A'}</td>
-                    <td>$${req.amount.toFixed(2)}</td>
-                    <td>${new Date(req.timestamp).toLocaleString()}</td>
-                    <td><span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-success action-btn" onclick="updateWithdrawalStatus('${key}', '${requestId}', '${userId}', 'Success')">Success</button>
-                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="updateWithdrawalStatus('${key}', '${requestId}', '${userId}', 'Rejected')">Reject</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Updated updateWithdrawalStatus to use composite key and userId/requestId
-        async function updateWithdrawalStatus(compositeKey, requestId, userId, newStatus) {
-            if (!userId || !requestId) {
-                showToast('Error', 'User ID or Request ID is missing.', true);
-                return;
-            }
-            try {
-                // Update status in Firebase under the user's withdrawHistory
-                await database.ref(`users/${userId}/withdrawHistory/${requestId}/status`).set(newStatus);
-
-                // Update local state if the entry exists
-                if (withdrawalsData[compositeKey]) {
-                    withdrawalsData[compositeKey].status = newStatus;
-                }
-
-                console.log(`Withdrawal ${requestId} for user ${userId} status updated to ${newStatus}`);
-                showToast('Success', `Withdrawal status updated to ${newStatus}.`);
-
-                // Reload withdrawals table and dashboard stats
-                loadWithdrawals(); // This will call renderWithdrawalsTable and loadDashboardData
-            } catch (error) {
-                console.error("Failed to update withdrawal status:", error);
-                showToast('Error', 'Failed to update withdrawal status.', true);
             }
         }
 
@@ -1145,6 +1092,54 @@
             });
         }
 
+        // - Withdrawals Management -
+        function renderWithdrawalsTable() {
+            const tableBody = document.getElementById('withdrawals-table-body');
+            tableBody.innerHTML = '';
+
+            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
+
+            if (sortedWithdrawals.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No withdrawals found.</td></tr>';
+                return;
+            }
+
+            sortedWithdrawals.forEach(([key, req]) => {
+                const [userId, requestId] = key.split('/');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${requestId}</td>
+                    <td>${userId}</td>
+                    <td>${req.username ? '@' + req.username : 'N/A'}</td>
+                    <td>$${req.amount.toFixed(2)}</td>
+                    <td>${new Date(req.timestamp).toLocaleString()}</td>
+                    <td><span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-success action-btn" onclick="updateWithdrawalStatus('${key}', '${requestId}', '${userId}', 'Success')">Success</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="updateWithdrawalStatus('${key}', '${requestId}', '${userId}', 'Rejected')">Reject</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function updateWithdrawalStatus(compositeKey, requestId, userId, newStatus) {
+            if (!userId || !requestId) {
+                showToast('Error', 'User ID or Request ID is missing.', true);
+                return;
+            }
+            try {
+                await database.ref(`users/${userId}/withdrawHistory/${requestId}/status`).set(newStatus);
+                console.log(`Withdrawal ${requestId} for user ${userId} status updated to ${newStatus}`);
+                showToast('Success', `Withdrawal status updated to ${newStatus}.`);
+                // The real-time listener will automatically update the UI
+            } catch (error) {
+                console.error("Failed to update withdrawal status:", error);
+                showToast('Error', 'Failed to update withdrawal status.', true);
+            }
+        }
+
+
         // - Notices Management -
         function renderNoticesTable() {
             const tableBody = document.getElementById('notices-table-body');
@@ -1158,14 +1153,12 @@
             }
 
             sortedNotices.forEach(([key, notice]) => {
-                // এখন আমরা শুধুমাত্র key পাঠাবো, আগের মতো title এবং message পাঠানো হবে না
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${notice.title}</td>
                     <td>${notice.message.substring(0, 50)}${notice.message.length > 50 ? '...' : ''}</td>
                     <td>${new Date(notice.timestamp).toLocaleString()}</td>
                     <td>
-                        <!-- শুধুমাত্র 'edit' mode এবং key পাঠানো হচ্ছে -->
                         <button class="btn btn-sm btn-outline-primary action-btn" onclick="openNoticeModal('edit', '${key}')"><i class="fas fa-edit"></i> Edit</button>
                         <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteNotice('${key}')"><i class="fas fa-trash"></i> Delete</button>
                     </td>
@@ -1174,26 +1167,20 @@
             });
         }
 
-        // এই ফাংশনটি পরিবর্তন করা হয়েছে: mode এবং key নেবে, title এবং message আর নেবে না
         function openNoticeModal(mode, key) {
             const modal = new bootstrap.Modal(document.getElementById('noticeModal'));
             document.getElementById('noticeModalLabel').textContent = mode === 'edit' ? 'Edit Notice' : 'Add Notice';
-            document.getElementById('notice-key').value = key; // Store the key
+            document.getElementById('notice-key').value = key;
 
-            // Clear fields initially
             document.getElementById('notice-title').value = '';
             document.getElementById('notice-message').value = '';
 
             if (mode === 'edit' && key && noticesData[key]) {
-                // Populate fields if editing
                 document.getElementById('notice-title').value = noticesData[key].title || '';
                 document.getElementById('notice-message').value = noticesData[key].message || '';
-            } // else, fields remain empty for 'new' mode
+            }
 
-            // Use a timeout to ensure modal is fully rendered before showing
-            setTimeout(() => {
-                modal.show();
-            }, 100); // 100ms delay should be sufficient
+            modal.show();
         }
 
         async function saveNotice() {
@@ -1213,16 +1200,14 @@
             };
 
             try {
-                if (key) { // Editing existing notice
+                if (key) {
                     await database.ref('notices/' + key).update(noticeData);
                     showToast('Success', 'Notice updated successfully.');
-                } else { // Adding new notice
+                } else {
                     await database.ref('notices').push(noticeData);
                     showToast('Success', 'Notice added successfully.');
                 }
-                // Reload notices
-                loadNotices();
-                // Close modal
+                // The real-time listener will automatically update the UI
                 const modal = bootstrap.Modal.getInstance(document.getElementById('noticeModal'));
                 modal.hide();
             } catch (error) {
@@ -1231,12 +1216,30 @@
             }
         }
 
-        // - Messages Management - Updated for real-time replies
+        async function deleteNotice(key) {
+            if (!key) {
+                showToast('Error', 'Notice key is missing.', true);
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete this notice?`)) {
+                return;
+            }
+            try {
+                await database.ref(`notices/${key}`).remove();
+                console.log(`Notice ${key} deleted successfully.`);
+                showToast('Success', 'Notice deleted successfully.');
+                // The real-time listener will automatically update the UI
+            } catch (error) {
+                console.error("Failed to delete notice:", error);
+                showToast('Error', 'Failed to delete notice.', true);
+            }
+        }
+
+        // - Messages Management -
         function renderMessagesTable() {
             const tableBody = document.getElementById('messages-table-body');
             tableBody.innerHTML = '';
 
-            // Sort messages by the timestamp of the latest message per user
             const sortedUserIds = Object.keys(messagesData).sort((a, b) => {
                 const latestMsgA = messagesData[a][Object.keys(messagesData[a]).pop()];
                 const latestMsgB = messagesData[b][Object.keys(messagesData[b]).pop()];
@@ -1252,14 +1255,13 @@
                 const userMessages = messagesData[userId];
                 if (!userMessages || Object.keys(userMessages).length === 0) return;
 
-                // Get the latest message
                 const messageKeys = Object.keys(userMessages);
-                const latestMsgKey = messageKeys[messageKeys.length - 1]; // Get last key
+                const latestMsgKey = messageKeys[messageKeys.length - 1];
                 const latestMsg = userMessages[latestMsgKey];
 
                 if (!latestMsg) return;
 
-                const userName = usersData[userId]?.username || userId; // Use username or UID if not available
+                const userName = usersData[userId]?.username || userId;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${userId} (${userName})</td>
@@ -1274,7 +1276,6 @@
             });
         }
 
-        // নতুন ফাংশন: Messages table থেকে মেসেজ ক্লিয়ার করতে
         async function clearUserMessagesFromTable(userId) {
             if (!confirm(`Are you sure you want to delete ALL messages for user ${userId}? This action cannot be undone.`)) {
                 return;
@@ -1283,61 +1284,45 @@
                 await database.ref(`users/${userId}/adminMessages`).remove();
                 console.log(`Messages cleared for user: ${userId}`);
                 showToast('Success', 'Messages cleared successfully.');
-                // মেসেজ টেবিল রিফ্রেশ করুন
-                loadMessages();
+                // The real-time listener will automatically update the UI
             } catch (error) {
                 console.error("Error clearing messages:", error);
                 showToast('Error', 'Failed to clear messages. Please try again.', true);
             }
         }
 
-        // Updated openMessageReplyModal to set up real-time listener
         function openMessageReplyModal(userId) {
             currentReplyUserId = userId;
             const modal = new bootstrap.Modal(document.getElementById('messageReplyModal'));
             document.getElementById('reply-user-id').value = userId;
-            // Clear input field
             document.getElementById('reply-message-input').value = '';
 
-            // Load existing messages for this user
             loadReplyMessageHistory(userId);
 
-            // Remove previous listener if it exists and was for a different user
-            if (replyMessagesListener && window.lastListenedUserId !== userId) {
+            if (replyMessagesListener) {
                  const previousUserId = window.lastListenedUserId;
                  if (previousUserId) {
                      database.ref(`users/${previousUserId}/adminMessages`).off('value', replyMessagesListener);
-                     console.log(`Removed listener for user ${previousUserId}`);
                  }
-                 replyMessagesListener = null; // Reset listener reference
+                 replyMessagesListener = null;
             }
 
-            // Setup real-time listener for updates
-            if (!replyMessagesListener) { // Only set up if not already active for this user
+            if (!replyMessagesListener) {
                 const userRef = database.ref(`users/${userId}/adminMessages`);
                 replyMessagesListener = userRef.on('value', (snapshot) => {
                     const messages = snapshot.val();
                     renderReplyMessageHistory(messages);
-                    console.log("Real-time message update received for user:", userId);
                 });
-                window.lastListenedUserId = userId; // Track which user is being listened to
-                console.log(`Set up listener for user ${userId}`);
+                window.lastListenedUserId = userId;
             }
 
-
-            // Setup send button listener (if not already done)
-            const sendBtn = document.getElementById('send-reply-message');
-            if (!sendBtn.onclick) {
-                sendBtn.onclick = sendReplyMessage;
-            }
+            document.getElementById('send-reply-message').onclick = sendReplyMessage;
 
             modal.show();
         }
 
-        // Function to load messages for the reply modal
         async function loadReplyMessageHistory(userId) {
             if (!userId) return;
-
             const messageHistoryDiv = document.getElementById('reply-message-history');
             messageHistoryDiv.innerHTML = '<p class="text-center text-muted">Loading messages...</p>';
 
@@ -1351,10 +1336,9 @@
             }
         }
 
-        // Function to render messages in the reply modal
         function renderReplyMessageHistory(messagesData) {
             const historyDiv = document.getElementById('reply-message-history');
-            historyDiv.innerHTML = ''; // Clear previous content
+            historyDiv.innerHTML = '';
 
             if (!messagesData) {
                 const noMsgElement = document.createElement('p');
@@ -1364,7 +1348,7 @@
                 return;
             }
 
-            const messages = Object.entries(messagesData).sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp)); // Sort by timestamp
+            const messages = Object.entries(messagesData).sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp));
 
             messages.forEach(([msgId, msg]) => {
                 const isUser = msg.sender === 'user';
@@ -1378,12 +1362,9 @@
                 historyDiv.appendChild(messageDiv);
             });
 
-            // Scroll to bottom after adding messages
             historyDiv.scrollTop = historyDiv.scrollHeight;
         }
 
-
-        // Updated Function to send reply message
         async function sendReplyMessage() {
             const userId = document.getElementById('reply-user-id').value;
             const input = document.getElementById('reply-message-input');
@@ -1396,22 +1377,21 @@
             const newMessageRef = database.ref(`users/${userId}/adminMessages`).push();
             const newMessageData = {
                 text: messageText,
-                sender: 'admin', // Admin is sending
+                sender: 'admin',
                 timestamp: new Date().toISOString()
             };
 
             try {
                 await newMessageRef.set(newMessageData);
                 console.log("Reply message sent successfully to user:", userId);
-                input.value = ''; // Clear input - This should trigger the listener to update the UI
-                // The real-time listener in openMessageReplyModal will automatically update the UI
+                input.value = ''; // This should trigger the listener to update the UI
+                // The real-time listener will automatically update the UI
             } catch (error) {
                 console.error("Error sending reply message:", error);
                 showToast('Error', 'Failed to send reply message. Please try again.', true);
             }
         }
 
-        // Function to clear user messages (from modal)
         async function clearUserMessages() {
             if (!currentReplyUserId) {
                 showToast('Error', 'No user selected.', true);
@@ -1425,12 +1405,10 @@
                 console.log(`Messages cleared for user: ${currentReplyUserId}`);
                 showToast('Success', 'Messages cleared successfully.');
 
-                // Clear the message history display in the modal
                 const messageHistoryDiv = document.getElementById('reply-message-history');
                 messageHistoryDiv.innerHTML = '<p class="text-center text-muted">No messages yet. Start a conversation!</p>';
 
-                // Reload the messages section table to reflect the change
-                loadMessages();
+                // The real-time listener in messages section will update the main table
             } catch (error) {
                 console.error("Failed to clear user messages:", error);
                 showToast('Error', 'Failed to clear messages.', true);
@@ -1438,83 +1416,13 @@
         }
 
 
-        // - Data Loading Functions -
-        async function loadUsers() {
-            // Removed showLoading(true, 'global');
-            try {
-                const snapshot = await database.ref('users').once('value');
-                usersData = snapshot.val() || {};
-                renderUsersTable(); // Initially render without filter
-                // Update dashboard stats here too if needed, but loadDashboardData() is already called
-            } catch (error) {
-                console.error("Failed to load users:", error);
-                showToast('Error', 'Failed to load users data.', true);
-            } // Removed finally block with showLoading(false, 'global');
-        }
-
-        async function loadNotices() {
-            // Removed showLoading(true, 'global');
-            try {
-                const snapshot = await database.ref('notices').once('value');
-                noticesData = snapshot.val() || {};
-                renderNoticesTable();
-            } catch (error) {
-                console.error("Failed to load notices:", error);
-                showToast('Error', 'Failed to load notices.', true);
-            } // Removed finally block with showLoading(false, 'global');
-        }
-
-        async function loadMessages() {
-            // Removed showLoading(true, 'global');
-            try {
-                const snapshot = await database.ref('users').orderByChild('lastMessageTimestamp').once('value'); // Assuming you have a lastMessageTimestamp
-                const users = snapshot.val() || {};
-
-                // For simplicity, we'll fetch all messages again.
-                // A more efficient way would be to listen to a specific path for all messages or last messages.
-                // For now, we'll iterate users and fetch their messages if they have any.
-                messagesData = {};
-                for (const userId in users) {
-                    const userRef = database.ref(`users/${userId}/adminMessages`);
-                    const msgSnapshot = await userRef.once('value');
-                    const userMessages = msgSnapshot.val();
-                    if (userMessages) {
-                        messagesData[userId] = userMessages;
-                    }
-                }
-                renderMessagesTable();
-            } catch (error) {
-                console.error("Failed to load messages:", error);
-                showToast('Error', 'Failed to load messages.', true);
-            } // Removed finally block with showLoading(false, 'global');
-        }
-
-
-        // - Helper Functions -
-        function showToast(title, message, isError = false) {
-            const toastEl = document.getElementById('liveToast');
-            const toastTitle = document.getElementById('toast-title');
-            const toastMessage = document.getElementById('toast-message');
-
-            toastTitle.textContent = title;
-            toastMessage.textContent = message;
-            if (isError) {
-                toastEl.classList.add('text-bg-danger');
-            } else {
-                toastEl.classList.remove('text-bg-danger');
-            }
-
-            const toast = new bootstrap.Toast(toastEl);
-            toast.show();
-        }
-
-        // - User Actions (Edit Points/Balance, Block/Unblock, Ad Status) -
+        // - User Actions -
         async function updateUserData(userId, field, value) {
             try {
                 await database.ref(`users/${userId}`).update({ [field]: value });
                 console.log(`${field} updated for user ${userId}`);
                 showToast('Success', `${field} updated successfully.`);
-                loadUsers(); // Reload users table to reflect changes
+                // The real-time listener will automatically update the UI
             } catch (error) {
                 console.error(`Failed to update ${field} for user ${userId}:`, error);
                 showToast('Error', `Failed to update ${field}.`, true);
@@ -1541,7 +1449,7 @@
                 await database.ref(`users/${userId}`).update({ isBlocked: newStatus });
                 console.log(`User ${userId} block status updated to ${newStatus}`);
                 showToast('Success', `User ${newStatus ? 'Blocked' : 'Unblocked'} successfully.`);
-                loadUsers(); // Reload users table
+                // The real-time listener will automatically update the UI
             } catch (error) {
                 console.error("Failed to update user block status:", error);
                 showToast('Error', 'Failed to update user block status.', true);
@@ -1554,30 +1462,10 @@
                 await database.ref(`users/${userId}`).update({ adStatus: newStatus });
                 console.log(`User ${userId} ad status updated to ${newStatus}`);
                 showToast('Success', `User ad status updated to ${newStatus}.`);
-                loadUsers(); // Reload users table
+                // The real-time listener will automatically update the UI
             } catch (error) {
                 console.error("Failed to update user ad status:", error);
                 showToast('Error', 'Failed to update user ad status.', true);
-            }
-        }
-
-
-        async function deleteNotice(key) {
-            if (!key) {
-                showToast('Error', 'Notice key is missing.', true);
-                return;
-            }
-            if (!confirm(`Are you sure you want to delete this notice?`)) {
-                return;
-            }
-            try {
-                await database.ref(`notices/${key}`).remove();
-                console.log(`Notice ${key} deleted successfully.`);
-                showToast('Success', 'Notice deleted successfully.');
-                loadNotices(); // Reload notices table
-            } catch (error) {
-                console.error("Failed to delete notice:", error);
-                showToast('Error', 'Failed to delete notice.', true);
             }
         }
 
@@ -1605,9 +1493,7 @@
             modal.show();
         }
 
-        // --- NEW: Theme Settings Functions ---
-
-        // Define default theme values based on user app
+        // --- Theme Settings Functions ---
         const defaultThemeData = {
             lightMode: {
                 "--primary-color": "#2ed914",
@@ -1645,25 +1531,20 @@
             }
         };
 
-        // Function to load theme from Firebase
         async function loadThemeFromFirebase() {
             try {
                 const themeSnapshot = await database.ref('appTheme').once('value');
                 const themeData = themeSnapshot.val();
 
                 if (themeData && themeData.lightMode) {
-                    // Populate light mode fields
                     for (const [cssVar, value] of Object.entries(themeData.lightMode)) {
-                        const inputId = cssVar.replace('--', ''); // e.g., --primary-color -> primary-color
+                        const inputId = cssVar.replace('--', '');
                         const inputElement = document.getElementById(inputId);
                         if (inputElement && (inputElement.type === 'color' || inputElement.type === 'text')) {
-                             // For color inputs, ensure it's a valid hex or rgba string if needed by UI
-                             // For text inputs (like border-color), set directly
                             inputElement.value = value;
                         }
                     }
                 } else {
-                    // If no theme data, set defaults
                     for (const [cssVar, value] of Object.entries(defaultThemeData.lightMode)) {
                         const inputId = cssVar.replace('--', '');
                         const inputElement = document.getElementById(inputId);
@@ -1674,16 +1555,14 @@
                 }
 
                 if (themeData && themeData.darkMode) {
-                    // Populate dark mode fields
                     for (const [cssVar, value] of Object.entries(themeData.darkMode)) {
-                        const inputId = 'dark-' + cssVar.replace('--', ''); // e.g., --primary-color -> dark-primary-color
+                        const inputId = 'dark-' + cssVar.replace('--', '');
                         const inputElement = document.getElementById(inputId);
                         if (inputElement && (inputElement.type === 'color' || inputElement.type === 'text')) {
                             inputElement.value = value;
                         }
                     }
                 } else {
-                    // If no theme data, set defaults for dark mode
                      for (const [cssVar, value] of Object.entries(defaultThemeData.darkMode)) {
                         const inputId = 'dark-' + cssVar.replace('--', '');
                         const inputElement = document.getElementById(inputId);
@@ -1697,7 +1576,6 @@
             } catch (error) {
                 console.error("Failed to load theme from Firebase:", error);
                 showToast('Error', 'Failed to load theme settings.', true);
-                // Apply defaults on error
                 for (const [cssVar, value] of Object.entries(defaultThemeData.lightMode)) {
                     const inputId = cssVar.replace('--', '');
                     const inputElement = document.getElementById(inputId);
@@ -1715,23 +1593,19 @@
             }
         }
 
-        // Function to save theme to Firebase
         async function saveThemeToFirebase() {
             const themeData = { lightMode: {}, darkMode: {} };
 
-            // Collect light mode values
             const lightInputs = document.querySelectorAll('#theme-config-form [name^=""][name*="-color"], #theme-config-form [name="border-color"]');
             lightInputs.forEach(input => {
                 if (input.name && input.value) {
                     const cssVarName = `--${input.name}`;
-                    // Check if it's a dark mode input (starts with 'dark-')
                     if (input.name.startsWith('dark-')) {
-                         const lightVarName = input.name.substring(5); // Remove 'dark-' prefix
+                         const lightVarName = input.name.substring(5);
                          if (lightVarName) {
                             themeData.darkMode[`--${lightVarName}`] = input.value;
                          }
                     } else {
-                        // It's a light mode input
                         themeData.lightMode[cssVarName] = input.value;
                     }
                 }
@@ -1747,13 +1621,11 @@
             }
         }
 
-        // Function to reset theme to default
         async function resetThemeToDefault() {
             if (!confirm("Are you sure you want to reset all theme settings to default? This will save the defaults to Firebase.")) {
                 return;
             }
             try {
-                // Apply defaults to the form
                 for (const [cssVar, value] of Object.entries(defaultThemeData.lightMode)) {
                     const inputId = cssVar.replace('--', '');
                     const inputElement = document.getElementById(inputId);
@@ -1768,7 +1640,6 @@
                         inputElement.value = value;
                     }
                 }
-                // Save the defaults to Firebase
                 await saveThemeToFirebase();
                 console.log("Theme reset to default and saved to Firebase.");
             } catch (error) {
@@ -1776,28 +1647,42 @@
                 showToast('Error', 'Failed to reset theme settings.', true);
             }
         }
+        // --- END Theme Settings Functions ---
 
-        // --- END NEW: Theme Settings Functions ---
 
+        // - Helper Functions -
+        function showToast(title, message, isError = false) {
+            const toastEl = document.getElementById('liveToast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
 
-        // - Initialize App -
-        document.addEventListener('DOMContentLoaded', function () {
-            // Existing initialization code remains unchanged
-            // ... (loading data, setting up listeners, etc.)
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            if (isError) {
+                toastEl.classList.add('text-bg-danger');
+            } else {
+                toastEl.classList.remove('text-bg-danger');
+            }
 
-            // NEW: Load theme settings after initial data load or on DOM ready
-            // It's generally safe to call this here, assuming Firebase is initialized.
-            loadThemeFromFirebase(); // Load theme when the page loads
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
 
-            // Example of how to set up a real-time listener for theme changes (optional, might not be needed in admin panel)
-            /*
-            database.ref('appTheme').on('value', (snapshot) => {
-                 const themeData = snapshot.val();
-                 // You could update the admin panel's *preview* here if desired, though usually admin panels don't reflect user themes.
-                 console.log("Theme updated in Firebase:", themeData);
-            });
-            */
+        // - Cleanup Listeners on Page Unload/Leave -
+        window.addEventListener('beforeunload', function() {
+            if (usersListener) database.ref('users').off('value', usersListener);
+            if (withdrawalsListener) database.ref('users').off('value', withdrawalsListener); // Using value listener for simplicity
+            if (noticesListener) database.ref('notices').off('value', noticesListener);
+            if (messagesListener) database.ref('users').off('value', messagesListener); // Using value listener for simplicity
+            if (appConfigListener) database.ref('appConfig').off('value', appConfigListener);
+            if (dashboardUsersListener) database.ref('users').off('value', dashboardUsersListener);
+            if (dashboardWithdrawalsListener) database.ref('users').off('value', dashboardWithdrawalsListener);
+            if (replyMessagesListener && window.lastListenedUserId) {
+                database.ref(`users/${window.lastListenedUserId}/adminMessages`).off('value', replyMessagesListener);
+            }
+            console.log("Listeners removed on page unload.");
         });
+
     </script>
 </body>
 </html>
