@@ -760,6 +760,7 @@
             loginSection.style.display = 'none';
             enableSidebarLinks();
             showSection(dashboardSection);
+            loadAppConfig(); // Load config first to ensure appConfig is populated
             loadDashboardData(); // Load dashboard data first
             loadUsers();
             loadWithdrawals();
@@ -797,6 +798,10 @@
 
             // Show the requested section
             section.classList.add('active');
+            // If config section is shown, ensure the form is loaded with current data
+            if (section.id === 'config-section') {
+                loadAppConfigForEdit();
+            }
         }
 
         // - NEW: showLoading function now does nothing -
@@ -806,23 +811,29 @@
         // - END NEW -
 
 
-        // - Dashboard Data Loading -
-        async function loadDashboardData() {
-            // Removed showLoading(true, 'dashboard');
+        // - App Configuration Management -
+        // Updated loadAppConfig to ensure defaults are set correctly
+        async function loadAppConfig() {
             try {
-                // Load users, withdrawals, and app config in parallel
-                const [usersSnapshot, withdrawalsSnapshot, configSnapshot] = await Promise.all([
-                    database.ref('users').once('value'),
-                    database.ref('withdrawals').once('value'),
-                    database.ref('appConfig').once('value')
-                ]);
+                const snapshot = await database.ref('appConfig').once('value');
+                const config = snapshot.val();
 
-                const users = usersSnapshot.val() || {};
-                const withdrawals = withdrawalsSnapshot.val() || {};
-                appConfig = configSnapshot.val() || {};
-
-                // If no config exists, initialize with defaults including resetTimerHours
-                if (Object.keys(appConfig).length === 0) {
+                if (config) {
+                    // Merge loaded config with defaults to ensure all keys exist
+                    appConfig = {
+                        pointsPerAd: config.pointsPerAd || 10,
+                        coinsForConversion: config.coinsForConversion || 1000,
+                        valuePerConversion: config.valuePerConversion || 0.30,
+                        referralRewardCoins: config.referralRewardCoins !== undefined ? config.referralRewardCoins : 10,
+                        referralClaimThreshold: config.referralClaimThreshold !== undefined ? config.referralClaimThreshold : 200,
+                        minWithdrawAmount: config.minWithdrawAmount !== undefined ? config.minWithdrawAmount : 5,
+                        dailyAdLimitPerUser: config.dailyAdLimitPerUser !== undefined ? config.dailyAdLimitPerUser : 10,
+                        isAdSystemActive: config.isAdSystemActive !== undefined ? config.isAdSystemActive : true,
+                        resetTimerHours: config.resetTimerHours !== undefined ? config.resetTimerHours : 12
+                    };
+                    console.log("App config loaded from Firebase:", appConfig);
+                } else {
+                    // If no config exists, initialize with defaults
                     appConfig = {
                         pointsPerAd: 10,
                         coinsForConversion: 1000,
@@ -835,7 +846,94 @@
                         resetTimerHours: 12 // Default reset timer
                     };
                     console.log("App config initialized with defaults:", appConfig);
+                    // Optionally, save defaults to Firebase if they don't exist
+                    // await database.ref('appConfig').set(appConfig);
                 }
+                // Update dashboard stats here too if needed, but loadDashboardData() is already called
+                // after loadAppConfig() in loginByUid()
+            } catch (error) {
+                console.error("Failed to load app config:", error);
+                showToast('Error', 'Failed to load app configuration.', true);
+            }
+        }
+
+        // Updated loadAppConfigForEdit to correctly load values from appConfig
+        function loadAppConfigForEdit() {
+            console.log("Loading config into form...", appConfig);
+            document.getElementById('pointsPerAd').value = appConfig.pointsPerAd || '';
+            document.getElementById('coinsForConversion').value = appConfig.coinsForConversion || '';
+            document.getElementById('valuePerConversion').value = appConfig.valuePerConversion || '';
+            document.getElementById('referralRewardCoins').value = appConfig.referralRewardCoins || '';
+            document.getElementById('referralClaimThreshold').value = appConfig.referralClaimThreshold || '';
+            document.getElementById('minWithdrawAmount').value = appConfig.minWithdrawAmount || '';
+            document.getElementById('dailyAdLimitPerUser').value = appConfig.dailyAdLimitPerUser || '';
+            document.getElementById('resetTimerHours').value = appConfig.resetTimerHours || '';
+            // Convert boolean value to string for select element
+            document.getElementById('isAdSystemActive').value = appConfig.isAdSystemActive === true ? 'true' : 'false';
+        }
+
+        // Updated saveAppConfig to correctly parse and save values
+        async function saveAppConfig() {
+            const configForm = document.getElementById('app-config-form');
+            const formData = new FormData(configForm);
+            const updatedConfig = {};
+
+            for (let [key, value] of formData.entries()) {
+                console.log(`Processing form field: ${key} = ${value}`);
+                // Convert string booleans to actual booleans
+                if (value === 'true') {
+                    updatedConfig[key] = true;
+                } else if (value === 'false') {
+                    updatedConfig[key] = false;
+                } else {
+                    // Convert numbers if possible
+                    if (!isNaN(value) && value !== '') {
+                        const parsedValue = parseFloat(value);
+                        if (!isNaN(parsedValue)) {
+                            updatedConfig[key] = parsedValue;
+                        } else {
+                            // Handle potential errors for non-numeric values where number is expected
+                            console.error(`Invalid number for ${key}: ${value}`);
+                            showToast('Error', `Invalid value for ${key}. Please enter a number.`, true);
+                            return; // Stop execution if validation fails
+                        }
+                    } else {
+                        // If it's not a number and not a boolean, keep it as a string (shouldn't happen with number inputs)
+                        updatedConfig[key] = value;
+                    }
+                }
+            }
+
+            console.log("Saving updated config to Firebase:", updatedConfig);
+
+            try {
+                await database.ref('appConfig').update(updatedConfig);
+                console.log("App config updated successfully.");
+                showToast('Success', 'App configuration updated.');
+                // Reload the config to update internal state and dashboard
+                await loadAppConfig(); // Load data again to update internal appConfig
+                loadAppConfigForEdit(); // Populate the config form with new values from the updated appConfig
+                loadDashboardData(); // Update dashboard to reflect new config
+            } catch (error) {
+                console.error("Failed to update app config:", error);
+                showToast('Error', 'Failed to update app configuration.', true);
+            }
+        }
+
+
+        // - Dashboard Data Loading -
+        async function loadDashboardData() {
+            // Removed showLoading(true, 'dashboard');
+            try {
+                // Load users, withdrawals, and app config in parallel
+                const [usersSnapshot, withdrawalsSnapshot] = await Promise.all([
+                    database.ref('users').once('value'),
+                    database.ref('withdrawals').once('value')
+                    // appConfig is already loaded in loginByUid
+                ]);
+
+                const users = usersSnapshot.val() || {};
+                const withdrawals = withdrawalsSnapshot.val() || {};
 
                 // Calculate dashboard stats
                 let totalUsers = 0;
@@ -858,17 +956,26 @@
                 document.getElementById('total-balance-sum').textContent = totalBalance.toFixed(2);
                 document.getElementById('pending-withdrawals-count').textContent = pendingWithdrawals;
 
-                // Update dashboard config values
-                document.getElementById('dashboard-ad-system-status').textContent = appConfig.isAdSystemActive ? 'Active' : 'Inactive';
-                document.getElementById('dashboard-daily-ad-limit').textContent = appConfig.dailyAdLimitPerUser || 'N/A';
-                document.getElementById('dashboard-points-per-ad').textContent = appConfig.pointsPerAd || 'N/A';
-                document.getElementById('dashboard-coins-for-conversion').textContent = appConfig.coinsForConversion || 'N/A';
-                document.getElementById('dashboard-value-per-conversion').textContent = appConfig.valuePerConversion || 'N/A';
+                // Update dashboard config values - Ensure appConfig is available
+                if (appConfig) {
+                    document.getElementById('dashboard-ad-system-status').textContent = appConfig.isAdSystemActive ? 'Active' : 'Inactive';
+                    document.getElementById('dashboard-daily-ad-limit').textContent = appConfig.dailyAdLimitPerUser || 'N/A';
+                    document.getElementById('dashboard-points-per-ad').textContent = appConfig.pointsPerAd || 'N/A';
+                    document.getElementById('dashboard-coins-for-conversion').textContent = appConfig.coinsForConversion || 'N/A';
+                    document.getElementById('dashboard-value-per-conversion').textContent = `$${appConfig.valuePerConversion.toFixed(2)}` || 'N/A';
+                } else {
+                    // Handle case where appConfig is not loaded yet
+                    document.getElementById('dashboard-ad-system-status').textContent = 'Loading...';
+                    document.getElementById('dashboard-daily-ad-limit').textContent = 'Loading...';
+                    document.getElementById('dashboard-points-per-ad').textContent = 'Loading...';
+                    document.getElementById('dashboard-coins-for-conversion').textContent = 'Loading...';
+                    document.getElementById('dashboard-value-per-conversion').textContent = 'Loading...';
+                }
 
                 // Update recent activity (example logic, adapt as needed)
                 const recentUserActivity = document.getElementById('recent-user-activity');
                 recentUserActivity.innerHTML = ''; // Clear previous
-                const sortedUsers = Object.entries(users).sort((a, b) => new Date(b[1].createdAt || 0) - new Date(a[1].createdAt || 0)).slice(0, 5);
+                const sortedUsers = Object.entries(users).sort((a, b) => new Date(b[1].lastAdWatchTime || 0) - new Date(a[1].lastAdWatchTime || 0)).slice(0, 5);
                 sortedUsers.forEach(([userId, user]) => {
                     const li = document.createElement('li');
                     li.className = 'list-group-item d-flex justify-content-between align-items-center';
@@ -876,7 +983,7 @@
                         <div>
                             <strong>${user.firstName || 'User'}</strong> (@${user.username || userId})
                         </div>
-                        <small>${new Date(user.createdAt || 0).toLocaleString()}</small>
+                        <small>${new Date(user.lastAdWatchTime || 0).toLocaleString()}</small>
                     `;
                     recentUserActivity.appendChild(li);
                 });
@@ -904,48 +1011,6 @@
             } // Removed finally block with showLoading(false, 'dashboard');
         }
 
-
-        // - App Configuration Management -
-        function loadAppConfigForEdit() {
-            document.getElementById('pointsPerAd').value = appConfig.pointsPerAd || '';
-            document.getElementById('coinsForConversion').value = appConfig.coinsForConversion || '';
-            document.getElementById('valuePerConversion').value = appConfig.valuePerConversion || '';
-            document.getElementById('referralRewardCoins').value = appConfig.referralRewardCoins || '';
-            document.getElementById('referralClaimThreshold').value = appConfig.referralClaimThreshold || '';
-            document.getElementById('minWithdrawAmount').value = appConfig.minWithdrawAmount || '';
-            document.getElementById('dailyAdLimitPerUser').value = appConfig.dailyAdLimitPerUser || '';
-            document.getElementById('resetTimerHours').value = appConfig.resetTimerHours || '';
-            // Convert boolean value to string for select element
-            document.getElementById('isAdSystemActive').value = appConfig.isAdSystemActive === true ? 'true' : 'false';
-        }
-
-        async function saveAppConfig() {
-            const configForm = document.getElementById('app-config-form');
-            const formData = new FormData(configForm);
-            const updatedConfig = {};
-            for (let [key, value] of formData.entries()) {
-                // Convert string booleans to actual booleans
-                if (value === 'true') value = true;
-                if (value === 'false') value = false;
-                // Convert numbers if possible
-                if (!isNaN(value) && value !== '') {
-                    value = parseFloat(value);
-                }
-                updatedConfig[key] = value;
-            }
-
-            try {
-                await database.ref('appConfig').update(updatedConfig);
-                console.log("App config updated successfully.");
-                showToast('Success', 'App configuration updated.');
-                // Reload the config to update internal state and dashboard
-                await loadDashboardData(); // Load data again to update dashboard
-                loadAppConfigForEdit(); // Populate the config form with new values
-            } catch (error) {
-                console.error("Failed to update app config:", error);
-                showToast('Error', 'Failed to update app configuration.', true);
-            }
-        }
 
         // - Users Management -
         function renderUsersTable(filter = '') {
