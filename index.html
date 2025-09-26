@@ -1,0 +1,1637 @@
+sagor
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            z-index: 100;
+            transition: all 0.3s;
+            background-color: #343a40;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background-color: #495057;
+            color: white;
+        }
+        .sidebar .nav-link i {
+            margin-right: 10px;
+        }
+        .main-panel {
+            margin-left: 250px;
+            padding-top: 20px;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+        }
+        .table-responsive {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .action-btn {
+            margin: 0 2px;
+        }
+        .status-badge {
+            font-size: 0.8em;
+        }
+        .form-control, .form-select {
+            border-radius: 0.375rem;
+        }
+        .btn {
+            border-radius: 0.375rem;
+        }
+        .toast {
+            z-index: 9999;
+        }
+        /* Custom CSS for larger notice message textarea */
+        .notice-message-large {
+            min-height: 150px; /* Minimum height */
+            resize: vertical; /* Allow vertical resizing only */
+        }
+        /* Modal content adjustments for larger size */
+        .modal-lg .modal-content {
+            max-height: 90vh; /* Increased max-height */
+            overflow-y: auto; /* Scroll if content overflows */
+        }
+        /* Message history area adjustments */
+        #reply-message-history {
+            max-height: 60vh; /* Increased max-height for message history */
+            min-height: 300px; /* Ensure a minimum height */
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--bs-body-bg); /* Use Bootstrap's body background */
+            border-radius: 8px;
+            border: 1px solid var(--bs-border-color); /* Use Bootstrap's border color */
+            display: flex; /* ফ্লেক্সবক্স লেআউট */
+            flex-direction: column; /* কলাম অর্ডার */
+        }
+        .message-bubble {
+            padding: 12px 18px; /* Increased padding */
+            margin-bottom: 10px; /* Space between messages */
+            border-radius: 18px; /* Increased border-radius */
+            max-width: 85%; /* Slightly increased max-width */
+            word-wrap: break-word;
+            font-size: 15px; /* Increased font size */
+        }
+        .sent-message { /* Admin messages */
+            background-color: #007bff; /* Bootstrap primary color */
+            color: white;
+            margin-left: auto; /* Align right for admin */
+        }
+        .received-message { /* User messages */
+            background-color: #e9ecef; /* Bootstrap light color */
+            color: #212529; /* Bootstrap dark color */
+            margin-right: auto; /* Align left for user */
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-dark sidebar">
+        <div class="position-sticky pt-3 sidebar-sticky">
+            <ul class="nav flex-column">
+                <!-- Initially disabled links -->
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-dashboard-link">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-config-link">
+                        <i class="fas fa-cogs"></i> App Configuration
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-users-link">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-withdrawals-link">
+                        <i class="fas fa-money-bill-wave"></i> Withdrawals
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-notices-link">
+                        <i class="fas fa-bullhorn"></i> Notices
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-messages-link">
+                        <i class="fas fa-comments"></i> Messages
+                    </a>
+                </li>
+                <!-- New Link for Theme Settings -->
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#" onclick="return false;" id="sidebar-theme-link">
+                        <i class="fas fa-palette"></i> Theme Settings
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid main-panel">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- Loading Spinner -->
+                <div id="loading-spinner" class="d-flex justify-content-center align-items-center" style="height: 80vh; display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Login Section -->
+                <div id="login-section" class="section active">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <div class="card shadow">
+                                <div class="card-header">
+                                    <h3 class="text-center">Admin Login</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="admin-uid" class="form-label">Admin UID</label>
+                                        <input type="text" class="form-control" id="admin-uid" placeholder="Enter Admin UID" required>
+                                    </div>
+                                    <button class="btn btn-primary w-100" onclick="loginByUid()">Login</button>
+                                    <div id="login-error" class="text-danger mt-2" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Section -->
+                <div id="dashboard-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Dashboard</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white bg-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Users</h5>
+                                    <p class="card-text" id="total-users">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white bg-success">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Points</h5>
+                                    <p class="card-text" id="total-points">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white bg-info">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total Balance ($)</h5>
+                                    <p class="card-text" id="total-balance">0.00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card text-white bg-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pending Withdrawals</h5>
+                                    <p class="card-text" id="pending-withdrawals">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Recent Withdrawals</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="recent-withdrawals-list" class="list-group list-group-flush">
+                                        <!-- Recent withdrawals will be populated here -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Recent Users</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul id="recent-users-list" class="list-group list-group-flush">
+                                        <!-- Recent users will be populated here -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- App Configuration Section -->
+                <div id="config-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">App Configuration</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <form id="app-config-form">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="pointsPerAd" class="form-label">Points Per Ad</label>
+                                                <input type="number" class="form-control" id="pointsPerAd" name="pointsPerAd" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="coinsForConversion" class="form-label">Coins for Conversion</label>
+                                                <input type="number" class="form-control" id="coinsForConversion" name="coinsForConversion" required>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label for="valuePerConversion" class="form-label">Value Per Conversion ($)</label>
+                                                <input type="number" step="0.01" class="form-control" id="valuePerConversion" name="valuePerConversion" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="referralRewardCoins" class="form-label">Referral Reward (Coins)</label>
+                                                <input type="number" class="form-control" id="referralRewardCoins" name="referralRewardCoins" required>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label for="referralClaimThreshold" class="form-label">Referral Claim Threshold (Coins)</label>
+                                                <input type="number" class="form-control" id="referralClaimThreshold" name="referralClaimThreshold" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="minWithdrawAmount" class="form-label">Minimum Withdraw Amount ($)</label>
+                                                <input type="number" step="0.01" class="form-control" id="minWithdrawAmount" name="minWithdrawAmount" required>
+                                            </div>
+                                        </div>
+                                         <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label for="dailyAdLimitPerUser" class="form-label">Daily Ad Limit Per User</label>
+                                                <!-- Added 'name' attribute -->
+                                                <input type="number" class="form-control" id="dailyAdLimitPerUser" name="dailyAdLimitPerUser" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="resetTimerHours" class="form-label">Reset Timer (Hours)</label>
+                                                <!-- Added 'name' attribute -->
+                                                <input type="number" class="form-control" id="resetTimerHours" name="resetTimerHours" min="1" required>
+                                                <div class="form-text">Number of hours after which the daily ad counter resets for each user.</div>
+                                            </div>
+                                        </div>
+                                        <div class="row mt-3">
+                                            <div class="col-md-6">
+                                                <label for="isAdSystemActive" class="form-label">Ad System Status</label>
+                                                <select class="form-select" id="isAdSystemActive" name="isAdSystemActive" required>
+                                                    <option value="true">Active</option>
+                                                    <option value="false">Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button type="button" class="btn btn-primary" onclick="saveAppConfig()">Save Configuration</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Section -->
+                <div id="users-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Users</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5>All Users</h5>
+                                    <input type="text" id="user-search" class="form-control w-auto" placeholder="Search users..." onkeyup="renderUsersTable(this.value)">
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>UID</th>
+                                                    <th>Name</th>
+                                                    <th>Username</th>
+                                                    <th>Points</th>
+                                                    <th>Balance ($)</th>
+                                                    <th>Referrals</th>
+                                                    <th>Ads Watched Today</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="users-table-body">
+                                                <!-- Users will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Withdrawals Section -->
+                <div id="withdrawals-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Withdrawals</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>All Withdrawal Requests</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Request ID</th>
+                                                    <th>User UID</th>
+                                                    <th>Username</th>
+                                                    <th>Amount ($)</th>
+                                                    <th>Timestamp</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="withdrawals-table-body">
+                                                <!-- Withdrawals will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notices Section -->
+                <div id="notices-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Notices</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5>All Notices</h5>
+                                    <button class="btn btn-success" onclick="openNoticeModal('new', null)"><i class="fas fa-plus"></i> Add Notice</button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Message</th>
+                                                    <th>Timestamp</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="notices-table-body">
+                                                <!-- Notices will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Section -->
+                <div id="messages-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Messages</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>User Messages</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>User UID</th>
+                                                    <th>Last Message</th>
+                                                    <th>Timestamp</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="messages-table-body">
+                                                <!-- Messages will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theme Settings Section (NEW) -->
+                <div id="theme-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Theme Settings</h1>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <form id="theme-config-form">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="primary-color" class="form-label">Primary Color</label>
+                                                <input type="color" class="form-control form-control-color" id="primary-color" name="primary-color" value="#2ed914">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="primary-hover" class="form-label">Primary Hover Color</label>
+                                                <input type="color" class="form-control form-control-color" id="primary-hover" name="primary-hover" value="#3bff21">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="secondary-color" class="form-label">Secondary Color</label>
+                                                <input type="color" class="form-control form-control-color" id="secondary-color" name="secondary-color" value="#e0e0e0">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="background-color" class="form-label">Background Color</label>
+                                                <input type="color" class="form-control form-control-color" id="background-color" name="background-color" value="#ffffff">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="text-color" class="form-label">Text Color</label>
+                                                <input type="color" class="form-control form-control-color" id="text-color" name="text-color" value="#000000">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="text-muted-color" class="form-label">Text Muted Color</label>
+                                                <input type="color" class="form-control form-control-color" id="text-muted-color" name="text-muted-color" value="#666666">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="accent-color" class="form-label">Accent Color</label>
+                                                <input type="color" class="form-control form-control-color" id="accent-color" name="accent-color" value="#ff8c00">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="card-bg" class="form-label">Card Background</label>
+                                                <input type="color" class="form-control form-control-color" id="card-bg" name="card-bg" value="#f5f5f5">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="error-color" class="form-label">Error Color</label>
+                                                <input type="color" class="form-control form-control-color" id="error-color" name="error-color" value="#ff4444">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="pending-color" class="form-label">Pending Color</label>
+                                                <input type="color" class="form-control form-control-color" id="pending-color" name="pending-color" value="#ffc107">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="processing-color" class="form-label">Processing Color</label>
+                                                <input type="color" class="form-control form-control-color" id="processing-color" name="processing-color" value="#17a2b8">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="success-color" class="form-label">Success Color</label>
+                                                <input type="color" class="form-control form-control-color" id="success-color" name="success-color" value="#28a745">
+                                            </div>
+                                        </div>
+                                         <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="rejected-color" class="form-label">Rejected Color</label>
+                                                <input type="color" class="form-control form-control-color" id="rejected-color" name="rejected-color" value="#dc3545">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="requesting-color" class="form-label">Requesting Color</label>
+                                                <input type="color" class="form-control form-control-color" id="requesting-color" name="requesting-color" value="#dc3545">
+                                            </div>
+                                        </div>
+                                         <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="border-color" class="form-label">Border Color (RGBA)</label>
+                                                <input type="text" class="form-control" id="border-color" name="border-color" value="rgba(0, 0, 0, 0.1)" placeholder="e.g., rgba(0, 0, 0, 0.1)">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-primary-color" class="form-label">Dark Mode Primary Color</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-primary-color" name="dark-primary-color" value="#4CAF50">
+                                            </div>
+                                        </div>
+                                         <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-primary-hover" class="form-label">Dark Mode Primary Hover</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-primary-hover" name="dark-primary-hover" value="#66BB6A">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-secondary-color" class="form-label">Dark Mode Secondary</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-secondary-color" name="dark-secondary-color" value="#424242">
+                                            </div>
+                                        </div>
+                                         <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-background-color" class="form-label">Dark Mode Background</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-background-color" name="dark-background-color" value="#121212">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-text-color" class="form-label">Dark Mode Text</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-text-color" name="dark-text-color" value="#FFFFFF">
+                                            </div>
+                                        </div>
+                                         <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-text-muted-color" class="form-label">Dark Mode Text Muted</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-text-muted-color" name="dark-text-muted-color" value="#BDBDBD">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-accent-color" class="form-label">Dark Mode Accent</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-accent-color" name="dark-accent-color" value="#FFA726">
+                                            </div>
+                                        </div>
+                                         <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-card-bg" class="form-label">Dark Mode Card Background</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-card-bg" name="dark-card-bg" value="#1E1E1E">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="dark-error-color" class="form-label">Dark Mode Error</label>
+                                                <input type="color" class="form-control form-control-color" id="dark-error-color" name="dark-error-color" value="#EF5350">
+                                            </div>
+                                        </div>
+                                        <div class="mt-4">
+                                            <button type="button" class="btn btn-primary" onclick="saveThemeToFirebase()">Save Theme</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Notice Modal -->
+    <div class="modal fade" id="noticeModal" tabindex="-1" aria-labelledby="noticeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="noticeModalLabel">Add/Edit Notice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="notice-key">
+                    <div class="mb-3">
+                        <label for="notice-title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="notice-title" required>
+                    </div>
+                    <!-- Updated Textarea: Added notice-message-large class for larger size -->
+                    <textarea class="form-control notice-message-large" id="notice-message" rows="6" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNotice()">Save Notice</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal -->
+    <div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userDetailModalLabel">User Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="user-detail-content">
+                        <!-- User details will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-warning" onclick="clearUserMessages()">Clear Messages</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Reply Modal -->
+    <div class="modal fade" id="messageReplyModal" tabindex="-1" aria-labelledby="messageReplyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="messageReplyModalLabel">Reply to User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reply-user-id">
+                    <div id="reply-message-history">
+                        <!-- Message history will be populated here -->
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <input type="text" id="reply-message-input" class="form-control" placeholder="Type your message...">
+                        <button class="btn btn-primary ms-2" id="send-reply-message"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <!-- Clear Messages Button -->
+                    <button type="button" class="btn btn-danger" onclick="clearUserMessages()">Clear Messages</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto" id="toast-title">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toast-message">Hello, world! This is a toast message.</div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS and Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script>
+        // - Firebase Configuration -
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3BGZ0MVLpbQbIpLUAnYvWNEIyk7Y6S0Q",
+            authDomain: "earning-app-80258.firebaseapp.com",
+            databaseURL: "https://earning-app-80258-default-rtdb.firebaseio.com",
+            projectId: "earning-app-80258",
+            storageBucket: "earning-app-80258.appspot.com",
+            messagingSenderId: "25930019210",
+            appId: "1:25930019210:web:6441562811d3e7e9631873",
+            measurementId: "G-P9HX6XXT1Q"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // - State Variables -
+        let appConfig = {};
+        let usersData = {};
+        let withdrawalsData = {};
+        let noticesData = {};
+        let messagesData = {}; // To store messages for the messages section
+        let currentReplyUserId = null; // To track which user we are replying to in the modal
+        let replyMessagesListener = null; // Listener for real-time updates in the reply modal
+
+        // - DOM Elements -
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const configSection = document.getElementById('config-section');
+        const usersSection = document.getElementById('users-section');
+        const withdrawalsSection = document.getElementById('withdrawals-section');
+        const noticesSection = document.getElementById('notices-section');
+        const messagesSection = document.getElementById('messages-section');
+        const themeSection = document.getElementById('theme-section'); // NEW
+
+        // - Authentication -
+        function loginByUid() {
+            const uid = document.getElementById('admin-uid').value.trim();
+            const errorDiv = document.getElementById('login-error');
+            errorDiv.style.display = 'none';
+
+            // Hardcoded UID for login
+            const requiredUid = 'YC0HCH4qQaUuVQsrAmfk5WiBfQ43';
+            if (!uid) {
+                errorDiv.textContent = 'Please enter Admin UID.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (uid !== requiredUid) {
+                errorDiv.textContent = 'Invalid Admin UID.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // If UID is correct
+            console.log("Admin logged in with UID:", uid);
+            loginSection.style.display = 'none';
+            enableSidebarLinks();
+            showSection(dashboardSection);
+            loadAppConfig();
+            loadUsers();
+            loadWithdrawals();
+            loadNotices();
+            loadMessages(); // Load messages data
+        }
+
+        function enableSidebarLinks() {
+            document.getElementById('sidebar-dashboard-link').classList.remove('disabled');
+            document.getElementById('sidebar-config-link').classList.remove('disabled');
+            document.getElementById('sidebar-users-link').classList.remove('disabled');
+            document.getElementById('sidebar-withdrawals-link').classList.remove('disabled');
+            document.getElementById('sidebar-notices-link').classList.remove('disabled');
+            document.getElementById('sidebar-messages-link').classList.remove('disabled');
+            document.getElementById('sidebar-theme-link').classList.remove('disabled'); // Enable new link
+
+            document.getElementById('sidebar-dashboard-link').onclick = () => showSection(dashboardSection);
+            document.getElementById('sidebar-config-link').onclick = () => showSection(configSection);
+            document.getElementById('sidebar-users-link').onclick = () => showSection(usersSection);
+            document.getElementById('sidebar-withdrawals-link').onclick = () => showSection(withdrawalsSection);
+            document.getElementById('sidebar-notices-link').onclick = () => showSection(noticesSection);
+            document.getElementById('sidebar-messages-link').onclick = () => showSection(messagesSection);
+            document.getElementById('sidebar-theme-link').onclick = () => showSection(themeSection); // NEW
+        }
+
+        function showSection(section) {
+            // Hide all sections
+            dashboardSection.classList.remove('active');
+            configSection.classList.remove('active');
+            usersSection.classList.remove('active');
+            withdrawalsSection.classList.remove('active');
+            noticesSection.classList.remove('active');
+            messagesSection.classList.remove('active');
+            themeSection.classList.remove('active'); // NEW
+
+            // Show the requested section
+            section.classList.add('active');
+        }
+
+        function showLoading(show) {
+            if (show) {
+                loadingSpinner.style.display = 'flex';
+            } else {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // - App Configuration Management -
+        function loadAppConfigForEdit() {
+            document.getElementById('pointsPerAd').value = appConfig.pointsPerAd || '';
+            document.getElementById('coinsForConversion').value = appConfig.coinsForConversion || '';
+            document.getElementById('valuePerConversion').value = appConfig.valuePerConversion || '';
+            document.getElementById('referralRewardCoins').value = appConfig.referralRewardCoins || '';
+            document.getElementById('referralClaimThreshold').value = appConfig.referralClaimThreshold || '';
+            document.getElementById('minWithdrawAmount').value = appConfig.minWithdrawAmount || '';
+            document.getElementById('dailyAdLimitPerUser').value = appConfig.dailyAdLimitPerUser || '';
+            document.getElementById('resetTimerHours').value = appConfig.resetTimerHours || '';
+            document.getElementById('isAdSystemActive').value = appConfig.isAdSystemActive.toString();
+        }
+
+        async function saveAppConfig() {
+            const configForm = document.getElementById('app-config-form');
+            const formData = new FormData(configForm);
+            const updatedConfig = {};
+            for (let [key, value] of formData.entries()) {
+                // Convert string booleans to actual booleans
+                if (value === 'true') value = true;
+                if (value === 'false') value = false;
+                // Convert numbers if possible
+                if (!isNaN(value) && value !== '') {
+                    value = parseFloat(value);
+                }
+                updatedConfig[key] = value;
+            }
+
+            try {
+                await database.ref('appConfig').update(updatedConfig);
+                console.log("App config updated successfully.");
+                showToast('Success', 'App configuration updated.');
+                // Reload the config to update internal state
+                loadAppConfig();
+            } catch (error) {
+                console.error("Failed to update app config:", error);
+                showToast('Error', 'Failed to update app configuration.', true);
+            }
+        }
+
+        // - Users Management -
+        function renderUsersTable(filter = '') {
+            const tableBody = document.getElementById('users-table-body');
+            tableBody.innerHTML = '';
+
+            const filteredUsers = Object.keys(usersData).filter(userId =>
+                userId.toLowerCase().includes(filter.toLowerCase()) ||
+                (usersData[userId].firstName && usersData[userId].firstName.toLowerCase().includes(filter.toLowerCase())) ||
+                (usersData[userId].username && usersData[userId].username.toLowerCase().includes(filter.toLowerCase()))
+            );
+
+            if (filteredUsers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No users found.</td></tr>';
+                return;
+            }
+
+            filteredUsers.forEach(userId => {
+                const user = usersData[userId];
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${userId}</td>
+                    <td>${user.firstName || 'N/A'}</td>
+                    <td>${user.username ? '@' + user.username : 'N/A'}</td>
+                    <td>${user.points || 0}</td>
+                    <td>$${(user.balance || 0).toFixed(2)}</td>
+                    <td>${user.referralCount || 0}</td>
+                    <td>${user.adsWatchedToday || 0}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="openUserDetailModal('${userId}')"><i class="fas fa-eye"></i> View</button>
+                        <button class="btn btn-sm btn-outline-warning action-btn" onclick="promptEditPoints('${userId}', ${user.points || 0})"><i class="fas fa-edit"></i> Points</button>
+                        <button class="btn btn-sm btn-outline-info action-btn" onclick="promptEditBalance('${userId}', ${user.balance || 0})"><i class="fas fa-edit"></i> Balance</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="toggleUserBlock('${userId}', ${user.isBlocked})"><i class="fas fa-${user.isBlocked ? 'unlock' : 'lock'}"></i> ${user.isBlocked ? 'Unblock' : 'Block'}</button>
+                        <button class="btn btn-sm btn-outline-secondary action-btn" onclick="updateUserAdStatus('${userId}', '${user.adStatus || 'Active'}')"><i class="fas fa-${(user.adStatus === 'Inactive') ? 'play' : 'pause'}"></i> ${(user.adStatus === 'Inactive') ? 'Activate' : 'Deactivate'}</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // - Withdrawals Management -
+        function renderWithdrawalsTable() {
+            const tableBody = document.getElementById('withdrawals-table-body');
+            tableBody.innerHTML = '';
+
+            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
+
+            if (sortedWithdrawals.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No withdrawals found.</td></tr>';
+                return;
+            }
+
+            sortedWithdrawals.forEach(([key, req]) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${key}</td>
+                    <td>${req.userId}</td>
+                    <td>${req.username ? '@' + req.username : 'N/A'}</td>
+                    <td>$${req.amount.toFixed(2)}</td>
+                    <td>${new Date(req.timestamp).toLocaleString()}</td>
+                    <td><span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : req.status === 'Rejected' ? 'danger' : 'info'}">${req.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-success action-btn" onclick="updateWithdrawalStatus('${key}', 'Success')">Success</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="updateWithdrawalStatus('${key}', 'Rejected')">Reject</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // - Notices Management -
+        function renderNoticesTable() {
+            const tableBody = document.getElementById('notices-table-body');
+            tableBody.innerHTML = '';
+
+            const sortedNotices = Object.entries(noticesData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
+
+            if (sortedNotices.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No notices found.</td></tr>';
+                return;
+            }
+
+            sortedNotices.forEach(([key, notice]) => {
+                // এখন আমরা শুধুমাত্র key পাঠাবো, আগের মতো title এবং message পাঠানো হবে না
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${notice.title}</td>
+                    <td>${notice.message.substring(0, 50)}${notice.message.length > 50 ? '...' : ''}</td>
+                    <td>${new Date(notice.timestamp).toLocaleString()}</td>
+                    <td>
+                        <!-- শুধুমাত্র 'edit' mode এবং key পাঠানো হচ্ছে -->
+                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="openNoticeModal('edit', '${key}')"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="deleteNotice('${key}')"><i class="fas fa-trash"></i> Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // এই ফাংশনটি পরিবর্তন করা হয়েছে: mode এবং key নেবে, title এবং message আর নেবে না
+        function openNoticeModal(mode, key) {
+            const modal = new bootstrap.Modal(document.getElementById('noticeModal'));
+            document.getElementById('noticeModalLabel').textContent = mode === 'edit' ? 'Edit Notice' : 'Add Notice';
+            document.getElementById('notice-key').value = key; // Store the key
+
+            // Clear fields initially
+            document.getElementById('notice-title').value = '';
+            document.getElementById('notice-message').value = '';
+
+            if (mode === 'edit' && key && noticesData[key]) {
+                // Populate fields if editing
+                document.getElementById('notice-title').value = noticesData[key].title || '';
+                document.getElementById('notice-message').value = noticesData[key].message || '';
+            } // else, fields remain empty for 'new' mode
+
+            // Use a timeout to ensure modal is fully rendered before showing
+            setTimeout(() => {
+                modal.show();
+            }, 100); // 100ms delay should be sufficient
+        }
+
+        async function saveNotice() {
+            const key = document.getElementById('notice-key').value;
+            const title = document.getElementById('notice-title').value.trim();
+            const message = document.getElementById('notice-message').value.trim();
+
+            if (!title || !message) {
+                showToast('Error', 'Title and message are required.', true);
+                return;
+            }
+
+            const noticeData = {
+                title: title,
+                message: message,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                if (key) { // Editing existing notice
+                    await database.ref('notices/' + key).update(noticeData);
+                    showToast('Success', 'Notice updated successfully.');
+                } else { // Adding new notice
+                    await database.ref('notices').push(noticeData);
+                    showToast('Success', 'Notice added successfully.');
+                }
+                // Reload notices
+                loadNotices();
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('noticeModal'));
+                modal.hide();
+            } catch (error) {
+                console.error("Failed to save notice:", error);
+                showToast('Error', 'Failed to save notice.', true);
+            }
+        }
+
+        // - Messages Management -
+        function renderMessagesTable() {
+            const tableBody = document.getElementById('messages-table-body');
+            tableBody.innerHTML = '';
+
+            // Sort messages by the timestamp of the latest message per user
+            const sortedUserIds = Object.keys(messagesData).sort((a, b) => {
+                const latestMsgA = messagesData[a][Object.keys(messagesData[a]).pop()];
+                const latestMsgB = messagesData[b][Object.keys(messagesData[b]).pop()];
+                return new Date(latestMsgB?.timestamp || 0) - new Date(latestMsgA?.timestamp || 0);
+            });
+
+            if (sortedUserIds.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No messages found.</td></tr>';
+                return;
+            }
+
+            sortedUserIds.forEach(userId => {
+                const userMessages = messagesData[userId];
+                if (!userMessages || Object.keys(userMessages).length === 0) return;
+
+                // Get the latest message
+                const messageKeys = Object.keys(userMessages);
+                const latestMsgKey = messageKeys[messageKeys.length - 1]; // Get last key
+                const latestMsg = userMessages[latestMsgKey];
+
+                if (!latestMsg) return;
+
+                const userName = usersData[userId]?.username || userId; // Use username or UID if not available
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${userId} (${userName})</td>
+                    <td>${latestMsg.text.substring(0, 50)}${latestMsg.text.length > 50 ? '...' : ''}</td>
+                    <td>${new Date(latestMsg.timestamp).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary action-btn" onclick="openMessageReplyModal('${userId}')"><i class="fas fa-reply"></i> Reply</button>
+                        <button class="btn btn-sm btn-outline-danger action-btn" onclick="clearUserMessagesFromTable('${userId}')"><i class="fas fa-trash"></i> Clear</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // নতুন ফাংশন: Messages table থেকে মেসেজ ক্লিয়ার করতে
+        async function clearUserMessagesFromTable(userId) {
+            if (!confirm(`Are you sure you want to delete ALL messages for user ${userId}? This action cannot be undone.`)) {
+                return;
+            }
+            try {
+                await database.ref(`users/${userId}/adminMessages`).remove();
+                console.log(`Messages cleared for user: ${userId}`);
+                showToast('Success', 'Messages cleared successfully.');
+                // মেসেজ টেবিল রিফ্রেশ করুন
+                loadMessages();
+            } catch (error) {
+                console.error("Error clearing messages:", error);
+                showToast('Error', 'Failed to clear messages. Please try again.', true);
+            }
+        }
+
+        function openMessageReplyModal(userId) {
+            currentReplyUserId = userId;
+            const modal = new bootstrap.Modal(document.getElementById('messageReplyModal'));
+            document.getElementById('reply-user-id').value = userId;
+            // Clear input field
+            document.getElementById('reply-message-input').value = '';
+
+            // Load existing messages for this user
+            loadReplyMessageHistory(userId);
+
+            // Setup send button listener (if not already done)
+            const sendBtn = document.getElementById('send-reply-message');
+            if (!sendBtn.onclick) {
+                sendBtn.onclick = sendReplyMessage;
+            }
+
+            modal.show();
+        }
+
+        // Function to load messages for the reply modal
+        async function loadReplyMessageHistory(userId) {
+            if (!userId) return;
+
+            const messageHistoryDiv = document.getElementById('reply-message-history');
+            messageHistoryDiv.innerHTML = '<p class="text-center text-muted">Loading messages...</p>';
+
+            try {
+                const snapshot = await database.ref(`users/${userId}/adminMessages`).once('value');
+                const messages = snapshot.val() || {};
+                const sortedMessages = Object.entries(messages).sort((a, b) => new Date(a[1].timestamp) - new Date(b[1].timestamp)); // Sort by timestamp
+
+                messageHistoryDiv.innerHTML = ''; // Clear loading message
+
+                if (sortedMessages.length === 0) {
+                    messageHistoryDiv.innerHTML = '<p class="text-center text-muted">No messages yet. Start a conversation!</p>';
+                    return;
+                }
+
+                sortedMessages.forEach(([msgId, msg]) => {
+                    const isUser = msg.sender === 'user';
+                    const bubbleClass = isUser ? 'received-message' : 'sent-message';
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message-bubble ${bubbleClass}`;
+                    messageDiv.innerHTML = `
+                        ${msg.text}<br>
+                        <small>${new Date(msg.timestamp).toLocaleTimeString()}</small>
+                    `;
+                    messageHistoryDiv.appendChild(messageDiv);
+                });
+
+                // Scroll to bottom after adding messages
+                messageHistoryDiv.scrollTop = messageHistoryDiv.scrollHeight;
+            } catch (error) {
+                console.error("Failed to load reply message history:", error);
+                messageHistoryDiv.innerHTML = '<p class="text-center text-danger">Failed to load messages.</p>';
+            }
+        }
+
+        // Function to send reply message
+        async function sendReplyMessage() {
+            if (!currentReplyUserId) {
+                showToast('Error', 'No user selected for reply.', true);
+                return;
+            }
+
+            const input = document.getElementById('reply-message-input');
+            const messageText = input.value.trim();
+            if (!messageText) return;
+
+            const newMessageRef = database.ref(`users/${currentReplyUserId}/adminMessages`).push();
+            const newMessageData = {
+                text: messageText,
+                sender: 'admin', // Admin is sending
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                await newMessageRef.set(newMessageData);
+                console.log("Reply message sent successfully.");
+                input.value = ''; // Clear input
+                // The real-time listener will update the UI
+            } catch (error) {
+                console.error("Failed to send reply message:", error);
+                showToast('Error', 'Failed to send message.', true);
+            }
+        }
+
+        // Function to clear user messages (from modal)
+        async function clearUserMessages() {
+            if (!currentReplyUserId) {
+                showToast('Error', 'No user selected.', true);
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete ALL messages for user ${currentReplyUserId}? This action cannot be undone.`)) {
+                return;
+            }
+            try {
+                await database.ref(`users/${currentReplyUserId}/adminMessages`).remove();
+                console.log(`Messages cleared for user: ${currentReplyUserId}`);
+                showToast('Success', 'Messages cleared successfully.');
+
+                // Clear the message history display in the modal
+                const messageHistoryDiv = document.getElementById('reply-message-history');
+                messageHistoryDiv.innerHTML = '<p class="text-center text-muted">No messages yet. Start a conversation!</p>';
+
+                // Reload the messages section table to reflect the change
+                loadMessages();
+            } catch (error) {
+                console.error("Failed to clear user messages:", error);
+                showToast('Error', 'Failed to clear messages.', true);
+            }
+        }
+
+
+        // - Data Loading Functions -
+        async function loadAppConfig() {
+            showLoading(true);
+            try {
+                const snapshot = await database.ref('appConfig').once('value');
+                appConfig = snapshot.val() || {};
+
+                // If no config exists, initialize with defaults including resetTimerHours
+                if (Object.keys(appConfig).length === 0) {
+                    appConfig = {
+                        pointsPerAd: 10,
+                        coinsForConversion: 1000,
+                        valuePerConversion: 0.30,
+                        referralRewardCoins: 10,
+                        referralClaimThreshold: 200,
+                        minWithdrawAmount: 5,
+                        dailyAdLimitPerUser: 10,
+                        isAdSystemActive: true,
+                        resetTimerHours: 12 // Default reset timer
+                    };
+                    console.log("App config initialized with defaults:", appConfig);
+                    // Optionally, save defaults to Firebase if they don't exist
+                    // await database.ref('appConfig').set(appConfig);
+                }
+                updateDashboardStats();
+                loadAppConfigForEdit(); // Populate the config form
+            } catch (error) {
+                console.error("Failed to load app config:", error);
+                showToast('Error', 'Failed to load app configuration.', true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadUsers() {
+            showLoading(true);
+            try {
+                const snapshot = await database.ref('users').once('value');
+                usersData = snapshot.val() || {};
+                renderUsersTable(); // Initially render without filter
+                updateDashboardStats();
+            } catch (error) {
+                console.error("Failed to load users:", error);
+                showToast('Error', 'Failed to load users.', true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadWithdrawals() {
+            showLoading(true);
+            try {
+                const snapshot = await database.ref('withdrawals').once('value');
+                withdrawalsData = snapshot.val() || {};
+                renderWithdrawalsTable();
+                updateDashboardStats();
+            } catch (error) {
+                console.error("Failed to load withdrawals:", error);
+                showToast('Error', 'Failed to load withdrawals.', true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadNotices() {
+            showLoading(true);
+            try {
+                const snapshot = await database.ref('notices').once('value');
+                noticesData = snapshot.val() || {};
+                renderNoticesTable();
+            } catch (error) {
+                console.error("Failed to load notices:", error);
+                showToast('Error', 'Failed to load notices.', true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadMessages() {
+            showLoading(true);
+            try {
+                const snapshot = await database.ref('users').orderByChild('lastMessageTimestamp').once('value'); // Assuming you have a lastMessageTimestamp
+                const users = snapshot.val() || {};
+
+                // For simplicity, we'll fetch all messages again.
+                // A more efficient way would be to listen to a specific path for all messages or last messages.
+                // For now, we'll iterate users and fetch their messages if they have any.
+                messagesData = {};
+                for (const userId in users) {
+                    const userRef = database.ref(`users/${userId}/adminMessages`);
+                    const msgSnapshot = await userRef.once('value');
+                    const userMessages = msgSnapshot.val();
+                    if (userMessages) {
+                        messagesData[userId] = userMessages;
+                    }
+                }
+                renderMessagesTable();
+            } catch (error) {
+                console.error("Failed to load messages:", error);
+                showToast('Error', 'Failed to load messages.', true);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+
+        // - Dashboard Stats -
+        function updateDashboardStats() {
+            let totalUsers = 0;
+            let totalPoints = 0;
+            let totalBalance = 0;
+            let pendingWithdrawals = 0;
+
+            for (const userId in usersData) {
+                totalUsers++;
+                totalPoints += usersData[userId].points || 0;
+                totalBalance += usersData[userId].balance || 0;
+            }
+
+            for (const reqId in withdrawalsData) {
+                if (withdrawalsData[reqId].status === 'Pending') {
+                    pendingWithdrawals++;
+                }
+            }
+
+            document.getElementById('total-users').textContent = totalUsers;
+            document.getElementById('total-points').textContent = totalPoints;
+            document.getElementById('total-balance').textContent = totalBalance.toFixed(2);
+            document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
+
+            // Populate recent withdrawals
+            const recentWithdrawalsList = document.getElementById('recent-withdrawals-list');
+            recentWithdrawalsList.innerHTML = '';
+            const sortedWithdrawals = Object.entries(withdrawalsData).sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp)).slice(0, 5);
+            sortedWithdrawals.forEach(([key, req]) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    ${req.username ? '@' + req.username : req.userId} - $${req.amount.toFixed(2)}
+                    <span class="badge bg-${req.status === 'Pending' ? 'warning' : req.status === 'Success' ? 'success' : 'danger'} status-badge">${req.status}</span>
+                `;
+                recentWithdrawalsList.appendChild(li);
+            });
+
+            // Populate recent users
+            const recentUsersList = document.getElementById('recent-users-list');
+            recentUsersList.innerHTML = '';
+            const sortedUsers = Object.entries(usersData).sort((a, b) => new Date(b[1].createdAt || 0) - new Date(a[1].createdAt || 0)).slice(0, 5);
+            sortedUsers.forEach(([userId, user]) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    ${user.firstName || 'User'} (@${user.username || userId}) - Points: ${user.points || 0}
+                `;
+                recentUsersList.appendChild(li);
+            });
+        }
+
+        // - Helper Functions -
+        function showToast(title, message, isError = false) {
+            const toastEl = document.getElementById('liveToast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            if (isError) {
+                toastEl.classList.add('text-bg-danger');
+            } else {
+                toastEl.classList.remove('text-bg-danger');
+            }
+
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+        }
+
+        // - User Actions (Edit Points/Balance, Block/Unblock, Ad Status) -
+        async function updateUserData(userId, field, value) {
+            try {
+                await database.ref(`users/${userId}`).update({ [field]: value });
+                console.log(`${field} updated for user ${userId}`);
+                showToast('Success', `${field} updated successfully.`);
+                loadUsers(); // Reload users table to reflect changes
+            } catch (error) {
+                console.error(`Failed to update ${field} for user ${userId}:`, error);
+                showToast('Error', `Failed to update ${field}.`, true);
+            }
+        }
+
+        function promptEditPoints(userId, currentPoints) {
+            const newPoints = prompt("Enter new points:", currentPoints);
+            if (newPoints !== null && !isNaN(newPoints)) {
+                updateUserData(userId, 'points', parseInt(newPoints));
+            }
+        }
+
+        function promptEditBalance(userId, currentBalance) {
+            const newBalance = prompt("Enter new balance ($):", currentBalance);
+            if (newBalance !== null && !isNaN(newBalance)) {
+                updateUserData(userId, 'balance', parseFloat(newBalance));
+            }
+        }
+
+        async function toggleUserBlock(userId, isCurrentlyBlocked) {
+            const newStatus = !isCurrentlyBlocked;
+            try {
+                await database.ref(`users/${userId}`).update({ isBlocked: newStatus });
+                console.log(`User ${userId} block status updated to ${newStatus}`);
+                showToast('Success', `User ${newStatus ? 'Blocked' : 'Unblocked'} successfully.`);
+                loadUsers(); // Reload users table
+            } catch (error) {
+                console.error("Failed to update user block status:", error);
+                showToast('Error', 'Failed to update user block status.', true);
+            }
+        }
+
+        async function updateUserAdStatus(userId, currentStatus) {
+             const newStatus = currentStatus === 'Inactive' ? 'Active' : 'Inactive';
+             try {
+                await database.ref(`users/${userId}`).update({ adStatus: newStatus });
+                console.log(`User ${userId} ad status updated to ${newStatus}`);
+                showToast('Success', `User ad status updated to ${newStatus}.`);
+                loadUsers(); // Reload users table
+            } catch (error) {
+                console.error("Failed to update user ad status:", error);
+                showToast('Error', 'Failed to update user ad status.', true);
+            }
+        }
+
+        async function updateWithdrawalStatus(requestId, newStatus) {
+            try {
+                await database.ref(`withdrawals/${requestId}`).update({ status: newStatus });
+                console.log(`Withdrawal ${requestId} status updated to ${newStatus}`);
+                showToast('Success', `Withdrawal status updated to ${newStatus}.`);
+                loadWithdrawals(); // Reload withdrawals table
+            } catch (error) {
+                console.error("Failed to update withdrawal status:", error);
+                showToast('Error', 'Failed to update withdrawal status.', true);
+            }
+        }
+
+        async function deleteNotice(key) {
+            if (!key) {
+                showToast('Error', 'Notice key is missing.', true);
+                return;
+            }
+            if (!confirm(`Are you sure you want to delete this notice?`)) {
+                return;
+            }
+            try {
+                await database.ref(`notices/${key}`).remove();
+                console.log(`Notice ${key} deleted successfully.`);
+                showToast('Success', 'Notice deleted successfully.');
+                loadNotices(); // Reload notices table
+            } catch (error) {
+                console.error("Failed to delete notice:", error);
+                showToast('Error', 'Failed to delete notice.', true);
+            }
+        }
+
+        function openUserDetailModal(userId) {
+            const user = usersData[userId];
+            if (!user) {
+                showToast('Error', 'User data not found.', true);
+                return;
+            }
+            const modal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+            const contentDiv = document.getElementById('user-detail-content');
+            contentDiv.innerHTML = `
+                <h5>User Details: ${user.firstName || 'User'} (@${user.username || userId})</h5>
+                <p><strong>UID:</strong> ${userId}</p>
+                <p><strong>Points:</strong> ${user.points || 0}</p>
+                <p><strong>Balance:</strong> $${(user.balance || 0).toFixed(2)}</p>
+                <p><strong>Referral Count:</strong> ${user.referralCount || 0}</p>
+                <p><strong>Referral Earnings:</strong> $${(user.referralEarnings || 0).toFixed(2)}</p>
+                <p><strong>Ads Watched Today:</strong> ${user.adsWatchedToday || 0}</p>
+                <p><strong>Last Ad Watch Time:</strong> ${user.lastAdWatchTime ? new Date(user.lastAdWatchTime).toLocaleString() : 'N/A'}</p>
+                <p><strong>Ad Status:</strong> ${user.adStatus || 'N/A'}</p>
+                <p><strong>Created At:</strong> ${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}</p>
+                <p><strong>Is Blocked:</strong> ${user.isBlocked ? 'Yes' : 'No'}</p>
+            `;
+            modal.show();
+        }
+
+        // --- NEW: Theme Settings Functions ---
+
+        // Define default theme values based on user app
+        const defaultThemeData = {
+            lightMode: {
+                "--primary-color": "#2ed914",
+                "--primary-hover": "#3bff21",
+                "--secondary-color": "#e0e0e0",
+                "--background-color": "#ffffff",
+                "--text-color": "#000000",
+                "--text-muted-color": "#666666",
+                "--accent-color": "#ff8c00",
+                "--card-bg": "#f5f5f5",
+                "--error-color": "#ff4444",
+                "--pending-color": "#ffc107",
+                "--processing-color": "#17a2b8",
+                "--success-color": "#28a745",
+                "--rejected-color": "#dc3545",
+                "--requesting-color": "#dc3545",
+                "--border-color": "rgba(0, 0, 0, 0.1)"
+            },
+            darkMode: {
+                "--primary-color": "#4CAF50",
+                "--primary-hover": "#66BB6A",
+                "--secondary-color": "#424242",
+                "--background-color": "#121212",
+                "--text-color": "#FFFFFF",
+                "--text-muted-color": "#BDBDBD",
+                "--accent-color": "#FFA726",
+                "--card-bg": "#1E1E1E",
+                "--error-color": "#EF5350",
+                "--pending-color": "#FFD54F",
+                "--processing-color": "#42A5F5",
+                "--success-color": "#66BB6A",
+                "--rejected-color": "#EF5350",
+                "--requesting-color": "#FFD54F",
+                "--border-color": "rgba(255, 255, 255, 0.1)"
+            }
+        };
+
+        // Function to load theme from Firebase
+        async function loadThemeFromFirebase() {
+            try {
+                const themeSnapshot = await database.ref('appTheme').once('value');
+                const themeData = themeSnapshot.val();
+
+                if (themeData && themeData.lightMode) {
+                    // Populate light mode fields
+                    for (const [cssVar, value] of Object.entries(themeData.lightMode)) {
+                        const inputId = cssVar.replace('--', ''); // e.g., --primary-color -> primary-color
+                        const inputElement = document.getElementById(inputId);
+                        if (inputElement && (inputElement.type === 'color' || inputElement.type === 'text')) {
+                             // For color inputs, ensure it's a valid hex or rgba string if needed by UI
+                             // For text inputs (like border-color), set directly
+                            inputElement.value = value;
+                        }
+                    }
+                } else {
+                    // If no theme data, set defaults
+                    for (const [cssVar, value] of Object.entries(defaultThemeData.lightMode)) {
+                        const inputId = cssVar.replace('--', '');
+                        const inputElement = document.getElementById(inputId);
+                        if (inputElement) {
+                            inputElement.value = value;
+                        }
+                    }
+                }
+
+                if (themeData && themeData.darkMode) {
+                    // Populate dark mode fields
+                    for (const [cssVar, value] of Object.entries(themeData.darkMode)) {
+                        const inputId = 'dark-' + cssVar.replace('--', ''); // e.g., --primary-color -> dark-primary-color
+                        const inputElement = document.getElementById(inputId);
+                        if (inputElement && (inputElement.type === 'color' || inputElement.type === 'text')) {
+                            inputElement.value = value;
+                        }
+                    }
+                } else {
+                    // If no theme data, set defaults for dark mode
+                     for (const [cssVar, value] of Object.entries(defaultThemeData.darkMode)) {
+                        const inputId = 'dark-' + cssVar.replace('--', '');
+                        const inputElement = document.getElementById(inputId);
+                        if (inputElement) {
+                            inputElement.value = value;
+                        }
+                    }
+                }
+
+                console.log("Theme loaded from Firebase or defaults applied.");
+            } catch (error) {
+                console.error("Failed to load theme from Firebase:", error);
+                showToast('Error', 'Failed to load theme settings.', true);
+                // Apply defaults on error
+                for (const [cssVar, value] of Object.entries(defaultThemeData.lightMode)) {
+                    const inputId = cssVar.replace('--', '');
+                    const inputElement = document.getElementById(inputId);
+                    if (inputElement) {
+                        inputElement.value = value;
+                    }
+                }
+                 for (const [cssVar, value] of Object.entries(defaultThemeData.darkMode)) {
+                    const inputId = 'dark-' + cssVar.replace('--', '');
+                    const inputElement = document.getElementById(inputId);
+                    if (inputElement) {
+                        inputElement.value = value;
+                    }
+                }
+            }
+        }
+
+        // Function to save theme to Firebase
+        async function saveThemeToFirebase() {
+            const themeData = { lightMode: {}, darkMode: {} };
+
+            // Collect light mode values
+            const lightInputs = document.querySelectorAll('#theme-config-form [name^=""][name*="-color"], #theme-config-form [name="border-color"]');
+            lightInputs.forEach(input => {
+                if (input.name && input.value) {
+                    const cssVarName = `--${input.name}`;
+                    // Check if it's a dark mode input (starts with 'dark-')
+                    if (input.name.startsWith('dark-')) {
+                         const lightVarName = input.name.substring(5); // Remove 'dark-' prefix
+                         if (lightVarName) {
+                            themeData.darkMode[`--${lightVarName}`] = input.value;
+                         }
+                    } else {
+                        // It's a light mode input
+                        themeData.lightMode[cssVarName] = input.value;
+                    }
+                }
+            });
+
+            try {
+                await database.ref('appTheme').set(themeData);
+                console.log("Theme saved to Firebase successfully.");
+                showToast('Success', 'Theme settings saved successfully.');
+            } catch (error) {
+                console.error("Failed to save theme to Firebase:", error);
+                showToast('Error', 'Failed to save theme settings.', true);
+            }
+        }
+
+        // --- END NEW: Theme Settings Functions ---
+
+
+        // - Initialize App -
+        document.addEventListener('DOMContentLoaded', function () {
+            // Existing initialization code remains unchanged
+            // ... (loading data, setting up listeners, etc.)
+
+            // NEW: Load theme settings after initial data load or on DOM ready
+            // It's generally safe to call this here, assuming Firebase is initialized.
+            loadThemeFromFirebase(); // Load theme when the page loads
+
+            // Example of how to set up a real-time listener for theme changes (optional, might not be needed in admin panel)
+            /*
+            database.ref('appTheme').on('value', (snapshot) => {
+                 const themeData = snapshot.val();
+                 // You could update the admin panel's *preview* here if desired, though usually admin panels don't reflect user themes.
+                 console.log("Theme updated in Firebase:", themeData);
+            });
+            */
+        });
+    </script>
+</body>
+</html>
